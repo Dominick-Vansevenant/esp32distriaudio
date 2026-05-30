@@ -1,0 +1,16 @@
+[Unit]
+Description=Librespot Spotify Connect source for Snapcast
+Documentation=https://github.com/librespot-org/librespot
+After=network-online.target snapserver.service avahi-daemon.service
+Wants=network-online.target avahi-daemon.service
+Requires=snapserver.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/librespot-snapcast-wrapper.sh
+Restart=always
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target
