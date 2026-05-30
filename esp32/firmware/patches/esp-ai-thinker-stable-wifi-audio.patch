@@ -139,6 +139,18 @@ index ae620b6..bb7eeff 100644
  
    wifi_config_t wifi_config;
    ESP_ERROR_CHECK(esp_wifi_get_config(WIFI_IF_STA, &wifi_config));
+diff --git a/snapclient/components/ui_http_server/CMakeLists.txt b/snapclient/components/ui_http_server/CMakeLists.txt
+index ca2b173..e017f06 100644
+--- a/snapclient/components/ui_http_server/CMakeLists.txt
++++ b/snapclient/components/ui_http_server/CMakeLists.txt
+@@ -1,6 +1,6 @@
+ idf_component_register(SRCS "ui_http_server.c"
+                        INCLUDE_DIRS "include"
+-                       REQUIRES esp_http_server settings_manager dsp_processor_settings tas5805m_settings
++                       REQUIRES esp_http_server esp_wifi heap settings_manager dsp_processor_settings tas5805m_settings
+                        PRIV_REQUIRES custom_board
+                        EMBED_TXTFILES html/index.html
+                                       html/index.js
 diff --git a/snapclient/components/ui_http_server/ui_http_server.c b/snapclient/components/ui_http_server/ui_http_server.c
 index b616a70..eb96c8a 100644
 --- a/snapclient/components/ui_http_server/ui_http_server.c
