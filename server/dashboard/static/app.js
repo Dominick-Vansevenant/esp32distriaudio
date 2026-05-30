@@ -65,8 +65,11 @@ function deviceCard(client, compact = false) {
   const pingClass = metric?.ping_ok ? "ok" : "fail";
   const volume = client.volume || {};
   const muted = Boolean(volume.muted);
-  return `<article class="device-card ${compact ? "is-compact" : ""}" draggable="true" data-client-id="${esc(client.id)}">
+  return `<article class="device-card ${compact ? "is-compact" : ""}" data-client-id="${esc(client.id)}">
     <div class="device-card-head">
+      <button class="drag-handle" draggable="true" data-drag-client="${esc(client.id)}" aria-label="${esc(client.name)} verslepen" title="Verslepen">
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+      </button>
       <input class="name-input" value="${esc(client.name)}" data-name="${esc(client.id)}" aria-label="Device naam">
       <span class="pill"><span class="dot ${client.connected ? "ok" : "fail"}"></span>${client.connected ? "online" : "offline"}</span>
     </div>
@@ -95,13 +98,17 @@ function deviceCard(client, compact = false) {
 }
 
 function bindDeviceActions(root = document) {
-  root.querySelectorAll("[data-client-id]").forEach((card) => {
-    card.addEventListener("dragstart", (event) => {
-      event.dataTransfer.setData("text/plain", card.dataset.clientId);
+  root.querySelectorAll("[data-drag-client]").forEach((handle) => {
+    handle.addEventListener("dragstart", (event) => {
+      event.dataTransfer.setData("text/plain", handle.dataset.dragClient);
       event.dataTransfer.effectAllowed = "move";
+      const card = handle.closest("[data-client-id]");
       card.classList.add("is-dragging");
     });
-    card.addEventListener("dragend", () => card.classList.remove("is-dragging"));
+    handle.addEventListener("dragend", () => {
+      const card = handle.closest("[data-client-id]");
+      card.classList.remove("is-dragging");
+    });
   });
 
   root.querySelectorAll("[data-name]").forEach((input) => {
