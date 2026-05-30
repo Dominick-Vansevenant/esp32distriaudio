@@ -4,7 +4,7 @@ from pathlib import Path
 
 SOURCE_LINE = (
     "source = pipe:///tmp/snapfifo?"
-    "name=Spotify&sampleformat=48000:16:2&codec=pcm&chunk_ms=20"
+    "name=Spotify&sampleformat=48000:16:2&codec=flac&chunk_ms=40"
 )
 BUFFER_LINE = "buffer = 6000"
 

@@ -6,7 +6,7 @@ The container runs:
 
 - `librespot` as Spotify Connect endpoint `Spotify Whole House`
 - `ffmpeg` to resample Spotify PCM from 44.1 kHz to 48 kHz
-- `snapserver` to distribute audio to ESP32-A1S Snapcast clients
+- `snapserver` to distribute FLAC-encoded audio to ESP32-A1S Snapcast clients
 - a small dashboard on port `8080` for clients, groups, quality graphs, and logs
 - optional `avahi-daemon` for mDNS discovery
 

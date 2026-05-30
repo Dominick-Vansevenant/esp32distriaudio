@@ -1,0 +1,34 @@
+# ESP32-A1S latency investigation
+
+## What we measured
+
+- Server-side ping to `192.168.230.60`: no packet loss, but frequent spikes around 80-180 ms.
+- Server-side ping to `192.168.230.61`: repeated full loss windows while Snapserver still remembered the client.
+- The same LAN pings normal devices at a few milliseconds, so this is not normal wired LAN latency.
+- Snapserver and librespot stayed active while the ESP32 clients showed the unstable behavior.
+
+## Current mitigation
+
+- Snapcast client latency is set to `2000 ms` for both ESP32 clients.
+- Snapserver uses `codec=flac` and `chunk_ms=40` for the Spotify pipe. This reduces Wi-Fi bandwidth and packet rate compared with raw PCM at 20 ms chunks.
+
+## Firmware root-cause candidate
+
+The ESP32 Snapclient firmware has a few settings that are risky for continuous 2.4 GHz audio streaming:
+
+- Wi-Fi power save is not explicitly disabled in `wifi_interface.c`.
+- The station bandwidth is forced to `WIFI_BW_HT40`, which is fragile on crowded 2.4 GHz channels.
+- The upstream AI Thinker config enables sample insertion. On the tested ESP32-A1S / ES8388 boards this correlated with fast/distorted playback.
+
+The patch in `esp32/firmware/patches/esp-ai-thinker-stable-wifi-audio.patch` changes the firmware to:
+
+- disable Wi-Fi power save with `esp_wifi_set_ps(WIFI_PS_NONE)`;
+- use 20 MHz Wi-Fi bandwidth with `WIFI_BW_HT20`;
+- keep ES8388-friendly I2S settings with MSB format and inverted BCLK;
+- disable sample insertion so the player uses APLL clock tuning instead.
+
+## Next validation
+
+1. Build a new ESP-AI-Thinker firmware from the patched source.
+2. Flash one ESP32 first and compare ping/jitter and audio hickups against the unpatched unit.
+3. If it improves, flash the second ESP32 and keep the FLAC server stream.

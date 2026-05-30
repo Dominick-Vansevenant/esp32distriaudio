@@ -1,0 +1,47 @@
+name: Build patched ESP32-A1S firmware
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "esp32/firmware/patches/**"
+      - ".github/workflows/build-esp32-firmware.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: espressif/idf:v5.5.1
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Checkout Esparagus Snapclient
+        run: |
+          git clone --recursive https://github.com/sonocotta/esparagus-snapclient.git upstream
+
+      - name: Apply stable Wi-Fi/audio patch
+        run: |
+          cd upstream
+          git apply ../esp32/firmware/patches/esp-ai-thinker-stable-wifi-audio.patch
+
+      - name: Build ESP-AI-Thinker firmware
+        run: |
+          . "$IDF_PATH/export.sh"
+          cd upstream/snapclient
+          cp ../configs/sdkconfig.esp-ai-thinker sdkconfig
+          idf.py build
+
+      - name: Collect binaries
+        run: |
+          mkdir -p artifacts/esp-ai-thinker-stable
+          cp upstream/snapclient/build/bootloader/bootloader.bin artifacts/esp-ai-thinker-stable/
+          cp upstream/snapclient/build/partition_table/partition-table.bin artifacts/esp-ai-thinker-stable/
+          cp upstream/snapclient/build/ota_data_initial.bin artifacts/esp-ai-thinker-stable/
+          cp upstream/snapclient/build/snapclient.bin artifacts/esp-ai-thinker-stable/
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: esp-ai-thinker-stable-wifi-audio
+          path: artifacts/esp-ai-thinker-stable/
