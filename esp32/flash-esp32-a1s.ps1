@@ -2,12 +2,14 @@ param(
   [Parameter(Mandatory=$true)]
   [string]$Port,
 
-  [string]$Python = "python"
+  [string]$Python = "python",
+
+  [string]$Firmware = "stable-wifi-audio-esp-ai-thinker"
 )
 
 $ErrorActionPreference = "Stop"
 
-$firmwareDir = Join-Path $PSScriptRoot "firmware\audio-first-esp-ai-thinker"
+$firmwareDir = Join-Path $PSScriptRoot "firmware\$Firmware"
 
 $bootloader = Join-Path $firmwareDir "bootloader.bin"
 $partition = Join-Path $firmwareDir "partition-table.bin"

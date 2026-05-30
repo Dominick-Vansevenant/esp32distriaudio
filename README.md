@@ -80,6 +80,12 @@ Voor een tweede board:
 .\esp32\flash-esp32-a1s.ps1 -Port COM7
 ```
 
+De standaard firmware in het flashscript is de `stable-wifi-audio-esp-ai-thinker` build. De oudere testbuild kan nog met:
+
+```powershell
+.\esp32\flash-esp32-a1s.ps1 -Port COM5 -Firmware audio-first-esp-ai-thinker
+```
+
 Na flashen configureer je de Wi-Fi via de webinterface/provisioning van de firmware. De ESP32 moet dezelfde netwerklaag kunnen bereiken als de Snapserver.
 
 ## Belangrijk
