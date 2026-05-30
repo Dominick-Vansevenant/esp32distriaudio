@@ -1,0 +1,14 @@
+[Unit]
+Description=Mute ESP32 Snapcast clients when Spotify stream is idle
+After=snapserver.service
+Requires=snapserver.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/snapcast-idle-mute.py
+Restart=always
+RestartSec=3
+User=root
+
+[Install]
+WantedBy=multi-user.target

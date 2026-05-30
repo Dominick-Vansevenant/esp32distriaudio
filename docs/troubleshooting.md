@@ -45,6 +45,8 @@ Controleer of de clients niet gemute zijn en in de juiste groep zitten:
 sudo ./tools/snapcast-activate-two-esp32.sh
 ```
 
+Let op: `snapcast-idle-mute` mute de ESP32 clients automatisch wanneer Spotify idle/gepauzeerd is. Dat voorkomt getik/geruis bij pauze. Zodra Spotify weer `playing` is, worden de clients automatisch unmuted.
+
 ## Audio is te snel of distorted
 
 Gebruik de audio-first ESP32 firmware in deze repo. De standaard ESP-AI-Thinker firmware gaf in de testsetup te snelle/distorted audio.

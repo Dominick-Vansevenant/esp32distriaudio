@@ -30,7 +30,9 @@ if ! command -v librespot >/dev/null 2>&1 && [ ! -x /root/.cargo/bin/librespot ]
 fi
 
 install -m 0755 server/librespot-snapcast-wrapper.sh /usr/local/bin/librespot-snapcast-wrapper.sh
+install -m 0755 server/snapcast-idle-mute.py /usr/local/bin/snapcast-idle-mute.py
 install -m 0644 server/systemd/librespot-snapcast.service /etc/systemd/system/librespot-snapcast.service
+install -m 0644 server/systemd/snapcast-idle-mute.service /etc/systemd/system/snapcast-idle-mute.service
 
 cp -a /etc/snapserver.conf "/etc/snapserver.conf.bak.$(date +%Y%m%d-%H%M%S)"
 python3 server/render-snapserver-conf.py /etc/snapserver.conf
@@ -39,5 +41,6 @@ systemctl daemon-reload
 systemctl enable --now avahi-daemon.service
 systemctl enable --now snapserver.service
 systemctl enable --now librespot-snapcast.service
+systemctl enable --now snapcast-idle-mute.service
 
 echo "Done. Select 'Spotify Whole House' in Spotify."

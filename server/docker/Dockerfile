@@ -23,11 +23,12 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
   && rm -rf /root/.cargo/registry /root/.cargo/git
 
 COPY server/librespot-snapcast-wrapper.sh /usr/local/bin/librespot-snapcast-wrapper.sh
+COPY server/snapcast-idle-mute.py /usr/local/bin/snapcast-idle-mute.py
 COPY server/docker/entrypoint.sh /usr/local/bin/esp32distriaudio-entrypoint.sh
 COPY server/docker/snapserver.conf /etc/snapserver.conf
 COPY tools /tools
 
-RUN chmod +x /usr/local/bin/librespot-snapcast-wrapper.sh /usr/local/bin/esp32distriaudio-entrypoint.sh \
+RUN chmod +x /usr/local/bin/librespot-snapcast-wrapper.sh /usr/local/bin/snapcast-idle-mute.py /usr/local/bin/esp32distriaudio-entrypoint.sh \
   && chmod +x /tools/*.sh \
   && mkdir -p /data /var/cache/librespot
 
