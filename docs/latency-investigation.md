@@ -13,7 +13,9 @@
 - Snapcast client latency is set to `3500 ms` for both ESP32 clients.
 - Snapserver uses `codec=pcm` and `chunk_ms=80` for the Spotify pipe. This avoids FLAC decode work on the ESP32 and keeps the packet rate lower than the original 20 ms chunks.
 - A server-side ESP32 watchdog closes stale Snapcast TCP sessions when Snapserver still sees a client as connected but the ESP32 IP is no longer reachable.
+- The watchdog also closes duplicate Snapcast TCP sessions per ESP32 IP. After OTA/reconnect testing, one ESP had five concurrent Snapcast streams to the same IP.
 - `ESP32-A1S-1` was updated successfully over the firmware OTA port `8032` using the patched application image.
+- `ESP32-A1S-1` was configured to use static Snapserver host `192.168.230.44:1704` with mDNS discovery disabled.
 
 ## Firmware root-cause candidate
 
@@ -29,6 +31,7 @@ The patch in `esp32/firmware/patches/esp-ai-thinker-stable-wifi-audio.patch` cha
 
 - disable Wi-Fi power save with `esp_wifi_set_ps(WIFI_PS_NONE)`;
 - use 20 MHz Wi-Fi bandwidth with `WIFI_BW_HT20`;
+- request maximum Wi-Fi TX power and disable reduced TX power config;
 - keep ES8388-friendly I2S settings with MSB format and inverted BCLK;
 - disable sample insertion so the player uses APLL clock tuning instead.
 

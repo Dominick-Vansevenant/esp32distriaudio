@@ -48,6 +48,16 @@ Als de ESP32 al draait en poort `8032` bereikbaar is, kun je alleen de app via W
 
 De OTA-server op de ESP32 is eenvoudig. Het script gebruikt daarom HTTP/1.0 en schakelt `Expect: 100-continue` uit.
 
+## Snapserver statisch instellen
+
+Zet de ESP32 op een vaste Snapserver-host en schakel mDNS-discovery uit:
+
+```powershell
+.\esp32\configure-static-snapserver.ps1 -Ip 192.168.230.60 -ServerHost 192.168.230.44 -Restart
+```
+
+Dit vermindert onnodige discovery-activiteit en maakt reconnects voorspelbaarder.
+
 ## Wi-Fi
 
 Na flashen moet de ESP32 op hetzelfde netwerk zitten als de server. Gebruik een 2.4 GHz SSID. In de testsetup was de ESP2 gevoeliger voor Wi-Fi jitter; dat gaf haperingen ondanks dat de server en Spotify in orde waren.
