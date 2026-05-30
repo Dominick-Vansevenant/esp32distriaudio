@@ -2,12 +2,21 @@ param(
   [Parameter(Mandatory=$true)]
   [string]$Port,
 
-  [string]$Python = "python",
+  [string]$Python = "",
 
   [string]$Firmware = "stable-wifi-audio-esp-ai-thinker"
 )
 
 $ErrorActionPreference = "Stop"
+
+if (!$Python) {
+  $bundledPython = Join-Path $env:USERPROFILE ".cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe"
+  if (Test-Path $bundledPython) {
+    $Python = $bundledPython
+  } else {
+    $Python = "python"
+  }
+}
 
 $firmwareDir = Join-Path $PSScriptRoot "firmware\$Firmware"
 
@@ -22,10 +31,16 @@ foreach ($file in @($bootloader, $partition, $ota, $app)) {
   }
 }
 
+& $Python -m esptool version | Out-Host
+
 & $Python -m esptool --chip esp32 --port $Port --baud 460800 `
-  --before default_reset --after hard_reset write_flash `
-  --flash_mode dio --flash_size 4MB --flash_freq 80m `
+  --before default-reset --after hard-reset write-flash `
+  --flash-mode dio --flash-size 4MB --flash-freq 80m `
   0x1000 $bootloader `
   0x8000 $partition `
   0x1d000 $ota `
   0x20000 $app
+
+if ($LASTEXITCODE -ne 0) {
+  throw "esptool failed with exit code $LASTEXITCODE"
+}
