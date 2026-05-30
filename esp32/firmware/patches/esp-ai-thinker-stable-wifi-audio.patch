@@ -139,6 +139,99 @@ index ae620b6..bb7eeff 100644
  
    wifi_config_t wifi_config;
    ESP_ERROR_CHECK(esp_wifi_get_config(WIFI_IF_STA, &wifi_config));
+diff --git a/snapclient/components/ui_http_server/ui_http_server.c b/snapclient/components/ui_http_server/ui_http_server.c
+index b616a70..eb96c8a 100644
+--- a/snapclient/components/ui_http_server/ui_http_server.c
++++ b/snapclient/components/ui_http_server/ui_http_server.c
+@@ -15,9 +15,11 @@
+ 
+ #include "dsp_processor_settings.h"
+ #include "esp_err.h"
++#include "esp_heap_caps.h"
+ #include "esp_http_server.h"
+ #include "esp_log.h"
+ #include "esp_system.h"
++#include "esp_wifi.h"
+ #include "freertos/FreeRTOS.h"
+ #include "freertos/queue.h"
+ #include "freertos/semphr.h"
+@@ -631,6 +633,40 @@ static esp_err_t restart_post_handler(httpd_req_t *req) {
+ 	return ESP_OK;
+ }
+ 
++/*
++ * GET /status handler
++ * Returns cheap runtime diagnostics for the server dashboard. Avoid Wi-Fi scans
++ * here; scans can interrupt audio on weak links.
++ */
++static esp_err_t status_get_handler(httpd_req_t *req) {
++	wifi_ap_record_t ap = {0};
++	uint8_t protocol = 0;
++	esp_err_t ap_ret = esp_wifi_sta_get_ap_info(&ap);
++	esp_err_t protocol_ret = esp_wifi_get_protocol(WIFI_IF_STA, &protocol);
++	char response[320] = {0};
++
++	set_cors_headers(req);
++
++	snprintf(response, sizeof(response),
++			 "{\"wifi_connected\":%s,\"rssi\":%d,\"primary_channel\":%u,"
++			 "\"second_channel\":%u,\"protocol\":%u,"
++			 "\"free_heap\":%u,\"min_free_heap\":%u,"
++			 "\"largest_internal_block\":%u}",
++			 ap_ret == ESP_OK ? "true" : "false",
++			 ap_ret == ESP_OK ? ap.rssi : 0,
++			 ap_ret == ESP_OK ? ap.primary : 0,
++			 ap_ret == ESP_OK ? ap.second : 0,
++			 protocol_ret == ESP_OK ? protocol : 0,
++			 (unsigned)esp_get_free_heap_size(),
++			 (unsigned)esp_get_minimum_free_heap_size(),
++			 (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
++
++	httpd_resp_set_status(req, "200 OK");
++	httpd_resp_set_type(req, "application/json");
++	httpd_resp_sendstr(req, response);
++	return ESP_OK;
++}
++
+ /*
+  * GET /api/dac/settings handler
+  * Returns current TAS5805M DAC settings as JSON
+@@ -1065,6 +1101,14 @@ esp_err_t start_server(const char *base_path, int port) {
+ 	};
+ 	httpd_register_uri_handler(server, &_restart_post_handler);
+ 
++	/* URI handler for status diagnostics */
++	httpd_uri_t _status_get_handler = {
++		.uri = "/status",
++		.method = HTTP_GET,
++		.handler = status_get_handler,
++	};
++	httpd_register_uri_handler(server, &_status_get_handler);
++
+ 	/* URI handler for OPTIONS (CORS preflight) - specific endpoints */
+ 	httpd_uri_t _options_post_handler = {
+ 		.uri = "/post",
+@@ -1101,6 +1145,13 @@ esp_err_t start_server(const char *base_path, int port) {
+ 	};
+ 	httpd_register_uri_handler(server, &_options_restart_handler);
+ 
++	httpd_uri_t _options_status_handler = {
++		.uri = "/status",
++		.method = HTTP_OPTIONS,
++		.handler = options_handler,
++	};
++	httpd_register_uri_handler(server, &_options_status_handler);
++
+ #if CONFIG_DAC_TAS5805M
+ 	/* URI handlers for DAC settings API */
+ 	httpd_uri_t _get_dac_settings_handler = {
+@@ -1345,4 +1396,4 @@ void init_http_server_task(void) {
+ 	// Stack size can be reduced from 512*8 since we're not using file I/O
+ 	xTaskCreatePinnedToCore(http_server_task, "HTTP", 512 * 6, NULL, 2,
+ 							&taskHandle, tskNO_AFFINITY);
+-}
+\ No newline at end of file
++}
 diff --git a/snapclient/main/main.c b/snapclient/main/main.c
 index 06b070d..a66fb0f 100644
 --- a/snapclient/main/main.c
