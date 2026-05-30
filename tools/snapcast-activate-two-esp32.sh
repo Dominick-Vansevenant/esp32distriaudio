@@ -10,9 +10,9 @@ GROUP_ID="${GROUP_ID:-78b1513c-6298-da56-af6b-ac4bbf586936}"
   sleep 0.2
   printf '{"id":41,"jsonrpc":"2.0","method":"Client.SetVolume","params":{"id":"%s","volume":{"muted":false,"percent":100}}}\n' "$ESP2_ID"
   sleep 0.2
-  printf '{"id":42,"jsonrpc":"2.0","method":"Client.SetLatency","params":{"id":"%s","latency":2000}}\n' "$ESP1_ID"
+  printf '{"id":42,"jsonrpc":"2.0","method":"Client.SetLatency","params":{"id":"%s","latency":3500}}\n' "$ESP1_ID"
   sleep 0.2
-  printf '{"id":43,"jsonrpc":"2.0","method":"Client.SetLatency","params":{"id":"%s","latency":2000}}\n' "$ESP2_ID"
+  printf '{"id":43,"jsonrpc":"2.0","method":"Client.SetLatency","params":{"id":"%s","latency":3500}}\n' "$ESP2_ID"
   sleep 0.2
   printf '{"id":44,"jsonrpc":"2.0","method":"Group.SetClients","params":{"id":"%s","clients":["%s","%s"]}}\n' "$GROUP_ID" "$ESP1_ID" "$ESP2_ID"
   sleep 0.2

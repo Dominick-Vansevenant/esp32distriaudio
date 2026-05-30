@@ -87,7 +87,7 @@ function deviceCard(client, compact = false, groupId = null) {
       <button data-mute="${esc(client.id)}">${muted ? "Unmute" : "Mute"}</button>
       <label class="latency-row">
         <span>Latency</span>
-        <input type="number" min="0" max="5000" step="100" value="${client.latency ?? 0}" data-latency="${esc(client.id)}">
+        <input type="number" min="0" max="8000" step="100" value="${client.latency ?? 0}" data-latency="${esc(client.id)}">
       </label>
       ${groupId ? `<button data-remove-client="${esc(client.id)}" data-remove-group="${esc(groupId)}">Uit groep halen</button>` : ""}
     </div>

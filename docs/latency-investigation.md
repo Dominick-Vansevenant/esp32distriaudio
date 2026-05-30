@@ -10,7 +10,7 @@
 
 ## Current mitigation
 
-- Snapcast client latency is set to `2000 ms` for both ESP32 clients.
+- Snapcast client latency is set to `3500 ms` for both ESP32 clients.
 - Snapserver uses `codec=pcm` and `chunk_ms=80` for the Spotify pipe. This avoids FLAC decode work on the ESP32 and keeps the packet rate lower than the original 20 ms chunks.
 - A server-side ESP32 watchdog closes stale Snapcast TCP sessions when Snapserver still sees a client as connected but the ESP32 IP is no longer reachable.
 - `ESP32-A1S-1` was updated successfully over the firmware OTA port `8032` using the patched application image.
