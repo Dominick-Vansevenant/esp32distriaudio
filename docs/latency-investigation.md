@@ -10,12 +10,14 @@
 
 ## Current mitigation
 
-- Snapcast client latency is set to `3500 ms` for both ESP32 clients.
+- Snapcast client latency is set to `8000 ms` for both ESP32 clients.
+- Snapserver buffer is set to `12000 ms` to absorb occasional ESP32 radio stalls.
 - Snapserver uses `codec=pcm` and `chunk_ms=80` for the Spotify pipe. This avoids FLAC decode work on the ESP32 and keeps the packet rate lower than the original 20 ms chunks.
 - A server-side ESP32 watchdog closes stale Snapcast TCP sessions when Snapserver still sees a client as connected but the ESP32 IP is no longer reachable.
 - The watchdog also closes duplicate Snapcast TCP sessions per ESP32 IP. After OTA/reconnect testing, one ESP had five concurrent Snapcast streams to the same IP.
 - `ESP32-A1S-1` was updated successfully over the firmware OTA port `8032` using the patched application image.
 - `ESP32-A1S-1` was configured to use static Snapserver host `192.168.230.44:1704` with mDNS discovery disabled.
+- Isolation test: ping stalls still occurred while Snapserver was stopped, proving the remaining issue is below the Spotify/Snapserver layer.
 
 ## Firmware root-cause candidate
 
