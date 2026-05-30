@@ -20,6 +20,8 @@ The ESP32 Snapclient firmware has a few settings that are risky for continuous 2
 - The station bandwidth is forced to `WIFI_BW_HT40`, which is fragile on crowded 2.4 GHz channels.
 - The upstream AI Thinker config enables sample insertion. On the tested ESP32-A1S / ES8388 boards this correlated with fast/distorted playback.
 
+Espressif documents that modem-sleep keeps the station associated but periodically powers down RF/PHY/BB, and that `WIFI_PS_NONE` disables modem-sleep to minimize real-time receive delay. Espressif also documents both HT20 and HT40 Wi-Fi bandwidth modes for ESP32 station operation.
+
 The patch in `esp32/firmware/patches/esp-ai-thinker-stable-wifi-audio.patch` changes the firmware to:
 
 - disable Wi-Fi power save with `esp_wifi_set_ps(WIFI_PS_NONE)`;
@@ -32,3 +34,8 @@ The patch in `esp32/firmware/patches/esp-ai-thinker-stable-wifi-audio.patch` cha
 1. Build a new ESP-AI-Thinker firmware from the patched source.
 2. Flash one ESP32 first and compare ping/jitter and audio hickups against the unpatched unit.
 3. If it improves, flash the second ESP32 and keep the FLAC server stream.
+
+## References
+
+- ESP-IDF Wi-Fi Performance and Power Save: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/wifi-driver/wifi-performance-and-power-save.html
+- ESP-IDF Wi-Fi bandwidth modes: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/wifi-driver/overview.html#wifi-bandwidth-mode
