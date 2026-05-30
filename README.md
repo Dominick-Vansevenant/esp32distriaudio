@@ -24,7 +24,7 @@ Spotify app
 
 - Server: Docker op Ubuntu/Debian, een kleine Linux machine, of LXC/VM.
 - Spotify endpoint: `Spotify Whole House`.
-- Server stream: `48000:16:2`, PCM, `chunk_ms=80`.
+- Server stream: `48000:16:2`, Opus, `chunk_ms=80`.
 - Snapserver buffer: `12000 ms`.
 - ESP32 client latency: `8000 ms`.
 - ESP32-A1S board: AI Thinker / ES8388 audio codec.
