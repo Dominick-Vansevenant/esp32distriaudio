@@ -61,6 +61,30 @@ index 2faed80..24fdf92 100644
  # CONFIG_ESP32_WIFI_AMSDU_TX_ENABLED is not set
  CONFIG_ESP32_WIFI_NVS_ENABLED=y
  CONFIG_ESP32_WIFI_TASK_PINNED_TO_CORE_0=y
+diff --git a/snapclient/components/lightsnapcast/player.c b/snapclient/components/lightsnapcast/player.c
+index ba4cb64..9128c4f 100644
+--- a/snapclient/components/lightsnapcast/player.c
++++ b/snapclient/components/lightsnapcast/player.c
+@@ -1779,7 +1779,9 @@ static void player_task(void *pvParameters) {
+ 
+       const int64_t shortOffset = SHORT_OFFSET;  // µs, softsync
+       const int64_t miniOffset = MINI_OFFSET;    // µs, softsync
+-      const int64_t hardResyncThreshold = 2000;  // µs, hard sync
++      // Snapserver already gives us a deep buffer. Do not tear down I2S for
++      // tiny scheduling or Wi-Fi jitter; only hard-resync for audible drift.
++      const int64_t hardResyncThreshold = 75000;  // µs, hard sync
+ 
+       if (initialSync == 1) {
+         if (size == 0) {
+@@ -2000,7 +2002,7 @@ static void player_task(void *pvParameters) {
+ 
+           // resync hard if we are getting very late / early.
+           // rest gets tuned in through apll speed control or sample insertion
+-          if ((msgWaiting == 0) ||
++          if (((msgWaiting == 0) && (age > hardResyncThreshold)) ||
+               (MEDIANFILTER_isFull(&shortMedianFilter, 0) &&
+                ((shortMedian > hardResyncThreshold) ||
+                 (shortMedian < -hardResyncThreshold)))) 
 diff --git a/snapclient/components/network_interface/wifi_interface.c b/snapclient/components/network_interface/wifi_interface.c
 index ae620b6..bb7eeff 100644
 --- a/snapclient/components/network_interface/wifi_interface.c
