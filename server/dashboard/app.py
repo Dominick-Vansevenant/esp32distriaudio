@@ -79,14 +79,16 @@ def write_dashboard_state(data):
 
 
 def dashboard_groups(status):
-    snap_ids = {group.get("id") for group in status.get("server", {}).get("groups", [])}
     groups = []
     changed = False
     data = read_dashboard_state()
     for group in data.get("virtual_groups", []):
-        if group.get("id") in snap_ids:
+        if not group.get("id") or not str(group.get("id")).startswith("dash-"):
             changed = True
             continue
+        if "clients" not in group:
+            group["clients"] = []
+            changed = True
         groups.append(group)
     if changed:
         data["virtual_groups"] = groups
@@ -144,7 +146,7 @@ def find_client_group(status, client_id):
 def create_virtual_group(name):
     clean_name = (name or "").strip() or "Nieuwe groep"
     data = read_dashboard_state()
-    group = {"id": f"dash-{int(time.time() * 1000)}", "name": clean_name}
+    group = {"id": f"dash-{int(time.time() * 1000)}", "name": clean_name, "clients": []}
     data["virtual_groups"].append(group)
     write_dashboard_state(data)
     return group
@@ -165,6 +167,61 @@ def virtual_group_by_id(group_id):
     return None
 
 
+def update_virtual_group(group_id, mutator):
+    data = read_dashboard_state()
+    for group in data.get("virtual_groups", []):
+        if group.get("id") == group_id:
+            group.setdefault("clients", [])
+            result = mutator(group)
+            write_dashboard_state(data)
+            return result if result is not None else group
+    raise RuntimeError("dashboard group not found")
+
+
+def set_virtual_group_name(group_id, name):
+    clean_name = (name or "").strip() or "Nieuwe groep"
+    return update_virtual_group(group_id, lambda group: group.update({"name": clean_name}) or group)
+
+
+def add_virtual_group_client(group_id, client_id):
+    def mutate(group):
+        if client_id not in group["clients"]:
+            group["clients"].append(client_id)
+        return group
+
+    return update_virtual_group(group_id, mutate)
+
+
+def remove_virtual_group_client(group_id, client_id):
+    def mutate(group):
+        group["clients"] = [item for item in group["clients"] if item != client_id]
+        return group
+
+    return update_virtual_group(group_id, mutate)
+
+
+def activate_virtual_group(group_id):
+    group = virtual_group_by_id(group_id)
+    if not group:
+        raise RuntimeError("dashboard group not found")
+    clients = [client_id for client_id in group.get("clients", []) if client_id]
+    if not clients:
+        raise RuntimeError("groep bevat nog geen devices")
+
+    status = get_snap_status()
+    target_group = None
+    for client_id in clients:
+        target_group = find_client_group(status, client_id)
+        if target_group:
+            break
+    if not target_group:
+        raise RuntimeError("geen actieve Snapcast client gevonden voor deze groep")
+
+    result = rpc("Group.SetClients", {"id": target_group.get("id"), "clients": clients})
+    rpc("Group.SetName", {"id": target_group.get("id"), "name": group.get("name", "Nieuwe groep")})
+    return result
+
+
 def move_client_to_group(client_id, target_group_id):
     status = get_snap_status()
     target = find_group(status, target_group_id)
@@ -181,27 +238,7 @@ def move_client_to_group(client_id, target_group_id):
     virtual = virtual_group_by_id(target_group_id)
     if not virtual:
         raise RuntimeError("group not found")
-
-    source_clients = [client.get("id") for client in source.get("clients", []) if client.get("id")]
-    if client_id not in source_clients:
-        raise RuntimeError("client not in source group")
-
-    remaining = [item for item in source_clients if item != client_id]
-    if remaining:
-        rpc("Group.SetClients", {"id": source.get("id"), "clients": remaining})
-        for _ in range(10):
-            time.sleep(0.2)
-            updated = get_snap_status()
-            new_group = find_client_group(updated, client_id)
-            if new_group and new_group.get("id") != source.get("id"):
-                rpc("Group.SetName", {"id": new_group.get("id"), "name": virtual.get("name", "Nieuwe groep")})
-                delete_virtual_group(target_group_id)
-                return {"group_id": new_group.get("id")}
-        raise RuntimeError("Snapcast heeft het device niet naar een nieuwe groep verplaatst")
-
-    rpc("Group.SetName", {"id": source.get("id"), "name": virtual.get("name", "Nieuwe groep")})
-    delete_virtual_group(target_group_id)
-    return {"group_id": source.get("id")}
+    return add_virtual_group_client(target_group_id, client_id)
 
 
 def set_device_wifi(ip, ssid, password):
@@ -434,10 +471,19 @@ class Handler(BaseHTTPRequestHandler):
                 result = delete_virtual_group(payload["group_id"])
             elif action == "move_client_to_group":
                 result = move_client_to_group(payload["client_id"], payload["group_id"])
+            elif action == "add_group_client":
+                result = add_virtual_group_client(payload["group_id"], payload["client_id"])
+            elif action == "remove_group_client":
+                result = remove_virtual_group_client(payload["group_id"], payload["client_id"])
+            elif action == "activate_virtual_group":
+                result = activate_virtual_group(payload["group_id"])
             elif action == "set_group_stream":
                 result = rpc("Group.SetStream", {"id": payload["group_id"], "stream_id": payload["stream_id"]})
             elif action == "set_group_name":
-                result = rpc("Group.SetName", {"id": payload["group_id"], "name": payload["name"]})
+                if str(payload["group_id"]).startswith("dash-"):
+                    result = set_virtual_group_name(payload["group_id"], payload["name"])
+                else:
+                    result = rpc("Group.SetName", {"id": payload["group_id"], "name": payload["name"]})
             elif action == "set_client_name":
                 result = rpc("Client.SetName", {"id": payload["client_id"], "name": payload["name"].strip()})
             elif action == "set_client_volume":

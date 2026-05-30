@@ -223,11 +223,11 @@ pre {
   display: grid;
   flex: 0 0 auto;
   gap: 3px 4px;
-  grid-template-columns: repeat(2, 4px);
+  grid-template-columns: repeat(3, 4px);
   height: 36px;
   justify-content: center;
   padding: 0;
-  width: 34px;
+  width: 38px;
 }
 
 .drag-handle:active {

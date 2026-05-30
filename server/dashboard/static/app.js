@@ -59,7 +59,7 @@ function renderServices() {
     .join("");
 }
 
-function deviceCard(client, compact = false) {
+function deviceCard(client, compact = false, groupId = null) {
   const metric = latestMetricFor(client.id);
   const ping = metric?.rtt_ms == null ? "-" : `${Math.round(metric.rtt_ms)} ms`;
   const pingClass = metric?.ping_ok ? "ok" : "fail";
@@ -89,6 +89,7 @@ function deviceCard(client, compact = false) {
         <span>Latency</span>
         <input type="number" min="0" max="5000" step="100" value="${client.latency ?? 0}" data-latency="${esc(client.id)}">
       </label>
+      ${groupId ? `<button data-remove-client="${esc(client.id)}" data-remove-group="${esc(groupId)}">Uit groep halen</button>` : ""}
     </div>
     <div class="device-footer">
       <span class="pill"><span class="dot ${pingClass}"></span>${ping}</span>
@@ -157,23 +158,29 @@ function renderDevices() {
 }
 
 function groupBlock(group) {
-  const clients = state.clients.filter((client) => client.group_id === group.id);
+  const clients = group.virtual
+    ? (group.clients || []).map((clientId) => state.clients.find((client) => client.id === clientId)).filter(Boolean)
+    : state.clients.filter((client) => client.group_id === group.id);
   const streamOptions = streams()
     .map((stream) => `<option value="${esc(stream.id)}" ${stream.id === group.stream_id ? "selected" : ""}>${esc(stream.id)}</option>`)
     .join("");
-  const empty = group.virtual ? "Sleep hier een device om de groep actief te maken." : "Geen devices in deze groep.";
+  const empty = group.virtual ? "Sleep hier devices naartoe. Een device mag in meerdere dashboard-groepen zitten." : "Geen devices in deze groep.";
   return `<section class="group-block ${group.virtual ? "is-virtual" : ""}" data-drop-group="${esc(group.id)}">
     <div class="group-title">
       <div>
-        <input class="group-name" value="${esc(group.name || group.id)}" data-group-name="${esc(group.id)}" ${group.virtual ? "disabled" : ""}>
-        <div class="sub">${group.virtual ? "Nieuwe groep" : esc(group.id)}</div>
+        <input class="group-name" value="${esc(group.name || group.id)}" data-group-name="${esc(group.id)}">
+        <div class="sub">${group.virtual ? "Dashboard-groep/preset" : "Actieve Snapcast-groep"}</div>
       </div>
       <div class="group-actions">
-        ${group.virtual ? `<button data-delete-virtual="${esc(group.id)}">Verwijder</button>` : `<select data-stream="${esc(group.id)}">${streamOptions}</select>`}
+        ${
+          group.virtual
+            ? `<button data-activate-virtual="${esc(group.id)}">Activeer</button><button data-delete-virtual="${esc(group.id)}">Verwijder</button>`
+            : `<select data-stream="${esc(group.id)}">${streamOptions}</select>`
+        }
       </div>
     </div>
     <div class="dropzone">
-      ${clients.map((client) => deviceCard(client, true)).join("") || `<div class="empty-drop">${empty}</div>`}
+      ${clients.map((client) => deviceCard(client, true, group.virtual ? group.id : null)).join("") || `<div class="empty-drop">${empty}</div>`}
     </div>
   </section>`;
 }
@@ -202,7 +209,12 @@ function renderGroups() {
       zone.classList.remove("is-over");
       const clientId = event.dataTransfer.getData("text/plain");
       if (clientId) {
-        await postAction({ action: "move_client_to_group", client_id: clientId, group_id: zone.dataset.dropGroup });
+        const groupId = zone.dataset.dropGroup;
+        await postAction({
+          action: groupId.startsWith("dash-") ? "add_group_client" : "move_client_to_group",
+          client_id: clientId,
+          group_id: groupId,
+        });
       }
     });
   });
@@ -222,6 +234,22 @@ function renderGroups() {
   document.querySelectorAll("[data-delete-virtual]").forEach((button) => {
     button.addEventListener("click", async () => {
       await postAction({ action: "delete_virtual_group", group_id: button.dataset.deleteVirtual });
+    });
+  });
+
+  document.querySelectorAll("[data-activate-virtual]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      await postAction({ action: "activate_virtual_group", group_id: button.dataset.activateVirtual });
+    });
+  });
+
+  document.querySelectorAll("[data-remove-client]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      await postAction({
+        action: "remove_group_client",
+        client_id: button.dataset.removeClient,
+        group_id: button.dataset.removeGroup,
+      });
     });
   });
 }
