@@ -152,7 +152,7 @@ index ca2b173..e017f06 100644
                         EMBED_TXTFILES html/index.html
                                        html/index.js
 diff --git a/snapclient/components/ui_http_server/ui_http_server.c b/snapclient/components/ui_http_server/ui_http_server.c
-index b616a70..eb96c8a 100644
+index b616a70..76e0a07 100644
 --- a/snapclient/components/ui_http_server/ui_http_server.c
 +++ b/snapclient/components/ui_http_server/ui_http_server.c
 @@ -15,9 +15,11 @@
@@ -208,7 +208,18 @@ index b616a70..eb96c8a 100644
  /*
   * GET /api/dac/settings handler
   * Returns current TAS5805M DAC settings as JSON
-@@ -1065,6 +1101,14 @@ esp_err_t start_server(const char *base_path, int port) {
+@@ -933,6 +969,10 @@ static esp_err_t static_file_handler(httpd_req_t *req) {
+ 
+ 	set_cors_headers(req);
+ 
++	if (strcmp(req->uri, "/status") == 0) {
++		return status_get_handler(req);
++	}
++
+ 	// Search for the requested file in embedded files
+ 	for (size_t i = 0; i < sizeof(embedded_files) / sizeof(embedded_file_t); i++) {
+ 		if (strcmp(req->uri, embedded_files[i].uri) == 0) {
+@@ -1065,6 +1105,14 @@ esp_err_t start_server(const char *base_path, int port) {
  	};
  	httpd_register_uri_handler(server, &_restart_post_handler);
  
@@ -223,7 +234,7 @@ index b616a70..eb96c8a 100644
  	/* URI handler for OPTIONS (CORS preflight) - specific endpoints */
  	httpd_uri_t _options_post_handler = {
  		.uri = "/post",
-@@ -1101,6 +1145,13 @@ esp_err_t start_server(const char *base_path, int port) {
+@@ -1101,6 +1149,13 @@ esp_err_t start_server(const char *base_path, int port) {
  	};
  	httpd_register_uri_handler(server, &_options_restart_handler);
  
@@ -237,7 +248,7 @@ index b616a70..eb96c8a 100644
  #if CONFIG_DAC_TAS5805M
  	/* URI handlers for DAC settings API */
  	httpd_uri_t _get_dac_settings_handler = {
-@@ -1345,4 +1396,4 @@ void init_http_server_task(void) {
+@@ -1345,4 +1400,4 @@ void init_http_server_task(void) {
  	// Stack size can be reduced from 512*8 since we're not using file I/O
  	xTaskCreatePinnedToCore(http_server_task, "HTTP", 512 * 6, NULL, 2,
  							&taskHandle, tskNO_AFFINITY);
