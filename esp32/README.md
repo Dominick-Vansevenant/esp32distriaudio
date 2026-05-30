@@ -17,6 +17,7 @@ De standaardvariant staat in `esp32/firmware/stable-wifi-audio-esp-ai-thinker/`.
 - AI Thinker / ES8388 board profile.
 - Wi-Fi power-save uitgeschakeld.
 - Wi-Fi bandbreedte op HT20 in plaats van HT40.
+- Wi-Fi AMPDU aggregation uitgeschakeld en station protocol voorlopig op 802.11g-only gezet om 11n block-ack latency-spikes te vermijden.
 - I2S MSB slot format ingeschakeld en BCLK inversie geforceerd voor dit board.
 - Sample insertion uitgeschakeld, zodat de player APLL clock tuning gebruikt.
 
