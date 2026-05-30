@@ -122,6 +122,7 @@ def main():
     parser.add_argument("--threshold", type=int, default=3)
     parser.add_argument("--probes", type=int, default=3)
     parser.add_argument("--timeout", type=int, default=1)
+    parser.add_argument("--max-sessions", type=int, default=1)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -137,6 +138,24 @@ def main():
         ip = client.get("host", {}).get("ip", "")
         seen.add(client_id)
         if not ip:
+            continue
+
+        sessions = tcp_sessions_for_ip(ip)
+        if len(sessions) > args.max_sessions:
+            if args.dry_run:
+                print(f"{client_id} {ip}: would close duplicate Snapcast TCP sessions {sessions}")
+            else:
+                killed, sessions = kill_tcp_sessions(ip)
+                if killed:
+                    print(f"{client_id} {ip}: closed duplicate Snapcast TCP sessions {sessions}")
+                else:
+                    print(f"{client_id} {ip}: duplicate sessions disappeared before cleanup")
+            state[client_id] = {
+                "ip": ip,
+                "failures": 0,
+                "last_action": int(time.time()),
+                "last_reason": "duplicate_sessions",
+            }
             continue
 
         if ping_ok(ip, probes=args.probes, timeout=args.timeout):
