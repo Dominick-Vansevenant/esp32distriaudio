@@ -2,6 +2,15 @@
 
 ## Spotify Whole House verschijnt niet
 
+Docker:
+
+```sh
+docker compose ps
+docker compose logs -f spotify-whole-house
+```
+
+Bare-metal:
+
 Controleer:
 
 ```sh
@@ -22,6 +31,12 @@ Controleer of Snapserver de stream als `playing` ziet:
 
 ```sh
 ./tools/snapcast-status.sh
+```
+
+Bij Docker:
+
+```sh
+printf '{"id":1,"jsonrpc":"2.0","method":"Server.GetStatus"}\n' | nc -w 3 127.0.0.1 1705
 ```
 
 Controleer of de clients niet gemute zijn en in de juiste groep zitten:
@@ -52,7 +67,14 @@ In de testsetup was ESP1 stabieler dan ESP2. ESP2 had hoge jitter en Snapserver 
 
 ## Server is herstart
 
-Na reboot:
+Docker:
+
+```sh
+docker compose restart
+docker compose exec spotify-whole-house /tools/snapcast-activate-two-esp32.sh
+```
+
+Bare-metal:
 
 ```sh
 sudo systemctl restart avahi-daemon

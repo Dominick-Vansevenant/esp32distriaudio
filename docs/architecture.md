@@ -30,3 +30,13 @@ Een kleine Linux machine is genoeg. Aanbevolen:
 - LXC/VM op Proxmox werkt ook.
 
 Absolute minimum zoals Pi Zero 2 W kan werken, maar Ethernet en stabiele voeding zijn belangrijker dan ruwe CPU.
+
+## Docker
+
+Het serverdeel is beschikbaar als Docker Compose setup. Gebruik host networking:
+
+```yaml
+network_mode: host
+```
+
+Dat houdt Spotify Connect discovery, Snapcast poorten en mDNS het eenvoudigst en betrouwbaarst.

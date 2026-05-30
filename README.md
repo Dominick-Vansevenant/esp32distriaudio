@@ -15,36 +15,48 @@ Spotify app
 
 ## Wat dit project bevat
 
-- `server/`: installatie- en configuratiebestanden voor de Linux server.
+- `server/`: Docker- en bare-metal configuratiebestanden voor de Linux server.
 - `esp32/`: flashscripts, firmware-notities en de gebruikte ESP32-A1S binaries.
 - `tools/`: kleine hulpscripts voor seriele logging en Snapcast controle.
 - `docs/`: uitleg, troubleshooting en bekabeling.
 
 ## Huidige bewezen setup
 
-- Server: Ubuntu/Debian LXC of kleine Linux machine.
+- Server: Docker op Ubuntu/Debian, een kleine Linux machine, of LXC/VM.
 - Spotify endpoint: `Spotify Whole House`.
 - Server stream: `48000:16:2`, PCM, `chunk_ms=20`.
 - Snapserver buffer: `6000 ms`.
 - ESP32 client latency: `2000 ms`.
 - ESP32-A1S board: AI Thinker / ES8388 audio codec.
 
-## Snelle installatie
+## Snelle installatie met Docker
 
-Op een verse Debian/Ubuntu server:
+Op een Linux server met Docker:
+
+```sh
+git clone https://github.com/Dominick-Vansevenant/esp32distriaudio.git
+cd esp32distriaudio
+docker compose up -d --build
+```
+
+Controleer:
+
+```sh
+docker compose ps
+docker compose logs -f
+```
+
+Kies in Spotify het apparaat `Spotify Whole House`.
+
+De container gebruikt `network_mode: host`. Dat is bewust zo, omdat Spotify Connect, Snapcast en mDNS discovery anders vaak niet betrouwbaar werken.
+
+## Bare-metal alternatief
+
+Wil je het zonder Docker installeren:
 
 ```sh
 sudo ./server/install-server.sh
 ```
-
-Daarna:
-
-```sh
-sudo systemctl status snapserver
-sudo systemctl status librespot-snapcast
-```
-
-Kies in Spotify het apparaat `Spotify Whole House`.
 
 ## ESP32 flashen
 

@@ -1,0 +1,17 @@
+services:
+  spotify-whole-house:
+    build:
+      context: .
+      dockerfile: server/docker/Dockerfile
+    container_name: spotify-whole-house
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - spotify-whole-house-data:/data
+      - spotify-whole-house-cache:/var/cache/librespot
+    environment:
+      ENABLE_AVAHI: "1"
+
+volumes:
+  spotify-whole-house-data:
+  spotify-whole-house-cache:
