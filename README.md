@@ -50,6 +50,14 @@ Kies in Spotify het apparaat `Spotify Whole House`.
 
 De container gebruikt `network_mode: host`. Dat is bewust zo, omdat Spotify Connect, Snapcast en mDNS discovery anders vaak niet betrouwbaar werken.
 
+Open daarna het dashboard:
+
+```text
+http://<server-ip>:8080
+```
+
+Daar zie je de ESP32 clients, Snapcast groepen, ping/verbinding grafieken, service-status en logs.
+
 ## Bare-metal alternatief
 
 Wil je het zonder Docker installeren:

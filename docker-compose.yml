@@ -12,6 +12,7 @@ services:
     environment:
       ENABLE_AVAHI: "1"
       ENABLE_IDLE_MUTE: "0"
+      DASHBOARD_PORT: "8080"
       SNAPCAST_CLIENTS: "70:4B:CA:25:53:C0,70:4B:CA:24:D7:B4"
 
 volumes:

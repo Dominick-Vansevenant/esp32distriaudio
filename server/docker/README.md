@@ -7,6 +7,7 @@ The container runs:
 - `librespot` as Spotify Connect endpoint `Spotify Whole House`
 - `ffmpeg` to resample Spotify PCM from 44.1 kHz to 48 kHz
 - `snapserver` to distribute audio to ESP32-A1S Snapcast clients
+- a small dashboard on port `8080` for clients, groups, quality graphs, and logs
 - optional `avahi-daemon` for mDNS discovery
 
 ## Start
@@ -16,6 +17,24 @@ docker compose up -d --build
 ```
 
 The compose file uses `network_mode: host`. This is intentional: Spotify Connect, Snapcast, and mDNS discovery all work best on the host network.
+
+## Dashboard
+
+Open:
+
+```text
+http://<server-ip>:8080
+```
+
+The dashboard can:
+
+- show Snapcast clients, IP addresses, groups, stream, volume, mute, and latency
+- move clients into an existing Snapcast group
+- switch a group to another Snapcast stream
+- show ping latency and connection state graphs
+- show `snapserver`, `librespot`, dashboard, and idle-mute logs
+
+The dashboard stores no credentials. It talks to Snapserver over the local JSON-RPC port inside the host-network container.
 
 ## Status
 

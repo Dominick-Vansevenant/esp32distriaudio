@@ -10,10 +10,13 @@ RUN apt-get update \
     curl \
     dbus \
     ffmpeg \
+    iputils-ping \
     libasound2-dev \
     libssl-dev \
     netcat-openbsd \
     pkg-config \
+    procps \
+    python3 \
     snapserver \
   && rm -rf /var/lib/apt/lists/*
 
@@ -24,6 +27,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
 
 COPY server/librespot-snapcast-wrapper.sh /usr/local/bin/librespot-snapcast-wrapper.sh
 COPY server/snapcast-idle-mute.py /usr/local/bin/snapcast-idle-mute.py
+COPY server/dashboard /opt/esp32distriaudio-dashboard
 COPY server/docker/entrypoint.sh /usr/local/bin/esp32distriaudio-entrypoint.sh
 COPY server/docker/snapserver.conf /etc/snapserver.conf
 COPY tools /tools
@@ -32,6 +36,6 @@ RUN chmod +x /usr/local/bin/librespot-snapcast-wrapper.sh /usr/local/bin/snapcas
   && chmod +x /tools/*.sh \
   && mkdir -p /data /var/cache/librespot
 
-EXPOSE 1704 1705 1780 5353/udp
+EXPOSE 1704 1705 1780 5353/udp 8080
 
 ENTRYPOINT ["/usr/local/bin/esp32distriaudio-entrypoint.sh"]

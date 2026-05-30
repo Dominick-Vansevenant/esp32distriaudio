@@ -17,6 +17,18 @@ docker compose ps
 docker compose logs -f spotify-whole-house
 ```
 
+Dashboard:
+
+```text
+http://<server-ip>:8080
+```
+
+Op de testserver is dat bijvoorbeeld:
+
+```text
+http://192.168.230.44:8080
+```
+
 Snapcast status:
 
 ```sh

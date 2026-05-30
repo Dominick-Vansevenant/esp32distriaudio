@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ESP32 Distri Audio</title>
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>ESP32 Distri Audio</h1>
+        <p id="subtitle">Spotify Whole House dashboard</p>
+      </div>
+      <div class="status-strip" id="service-status"></div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab is-active" data-tab="overview">Overzicht</button>
+      <button class="tab" data-tab="groups">Groepen</button>
+      <button class="tab" data-tab="quality">Kwaliteit</button>
+      <button class="tab" data-tab="logs">Logs</button>
+    </nav>
+
+    <main>
+      <section id="overview" class="panel is-active">
+        <div class="section-head">
+          <h2>Devices</h2>
+          <button id="refresh">Vernieuwen</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Naam</th>
+                <th>IP</th>
+                <th>Groep</th>
+                <th>Stream</th>
+                <th>Ping</th>
+                <th>Volume</th>
+                <th>Latency</th>
+              </tr>
+            </thead>
+            <tbody id="devices"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="groups" class="panel">
+        <div class="section-head">
+          <h2>Groepen</h2>
+          <span id="group-hint"></span>
+        </div>
+        <div id="groups-list" class="groups"></div>
+      </section>
+
+      <section id="quality" class="panel">
+        <div class="section-head">
+          <h2>Kwaliteit</h2>
+          <span>Laatste 20 minuten</span>
+        </div>
+        <div class="quality-grid">
+          <div>
+            <h3>Ping latency</h3>
+            <canvas id="ping-chart" width="900" height="320"></canvas>
+          </div>
+          <div>
+            <h3>Connectiviteit</h3>
+            <canvas id="connect-chart" width="900" height="180"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section id="logs" class="panel">
+        <div class="section-head">
+          <h2>Logs</h2>
+          <select id="log-select">
+            <option value="snapserver">snapserver</option>
+            <option value="librespot">librespot</option>
+            <option value="dashboard">dashboard</option>
+            <option value="idle-mute">idle-mute</option>
+          </select>
+        </div>
+        <pre id="log-output"></pre>
+      </section>
+    </main>
+
+    <div id="toast" role="status"></div>
+    <script src="/app.js"></script>
+  </body>
+</html>
