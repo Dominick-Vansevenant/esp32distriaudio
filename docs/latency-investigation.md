@@ -34,7 +34,8 @@ The patch in `esp32/firmware/patches/esp-ai-thinker-stable-wifi-audio.patch` cha
 
 - disable Wi-Fi power save with `esp_wifi_set_ps(WIFI_PS_NONE)`;
 - use 20 MHz Wi-Fi bandwidth with `WIFI_BW_HT20`;
-- disable AMPDU TX/RX aggregation and force station mode to `WIFI_PROTOCOL_11G`;
+- disable AMPDU TX/RX aggregation, disable 802.11b rates, and use `WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N` on HT20;
+- enable Wi-Fi and LwIP IRAM optimizations to reduce stalls when flash/cache activity occurs;
 - relax the Snapclient hard-resync threshold from 2 ms to 75 ms and avoid hard-resyncing only because the chunk queue is briefly empty;
 - request maximum Wi-Fi TX power and disable reduced TX power config;
 - stop Improv Wi-Fi provisioning after 10 seconds instead of 3 minutes;

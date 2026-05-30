@@ -1,5 +1,5 @@
 diff --git a/configs/sdkconfig.esp-ai-thinker b/configs/sdkconfig.esp-ai-thinker
-index 2faed80..24fdf92 100644
+index 2faed80..5638edb 100644
 --- a/configs/sdkconfig.esp-ai-thinker
 +++ b/configs/sdkconfig.esp-ai-thinker
 @@ -352,7 +352,9 @@ CONFIG_SNAPCLIENT_NAME="ESP32-AI-Thinker"
@@ -22,7 +22,7 @@ index 2faed80..24fdf92 100644
  CONFIG_ESP_PHY_RF_CAL_PARTIAL=y
  # CONFIG_ESP_PHY_RF_CAL_NONE is not set
  # CONFIG_ESP_PHY_RF_CAL_FULL is not set
-@@ -1024,10 +1026,8 @@ CONFIG_ESP_WIFI_TX_BUFFER_TYPE=0
+@@ -1024,17 +1026,15 @@ CONFIG_ESP_WIFI_TX_BUFFER_TYPE=0
  CONFIG_ESP_WIFI_STATIC_TX_BUFFER_NUM=8
  CONFIG_ESP_WIFI_CACHE_TX_BUFFER_NUM=32
  # CONFIG_ESP_WIFI_CSI_ENABLED is not set
@@ -35,6 +35,23 @@ index 2faed80..24fdf92 100644
  # CONFIG_ESP_WIFI_AMSDU_TX_ENABLED is not set
  CONFIG_ESP_WIFI_NVS_ENABLED=y
  CONFIG_ESP_WIFI_TASK_PINNED_TO_CORE_0=y
+ # CONFIG_ESP_WIFI_TASK_PINNED_TO_CORE_1 is not set
+ CONFIG_ESP_WIFI_SOFTAP_BEACON_MAX_LEN=752
+ CONFIG_ESP_WIFI_MGMT_SBUF_NUM=32
+-# CONFIG_ESP_WIFI_IRAM_OPT is not set
++CONFIG_ESP_WIFI_IRAM_OPT=y
+ CONFIG_ESP_WIFI_RX_IRAM_OPT=y
+ CONFIG_ESP_WIFI_ENABLE_WPA3_SAE=y
+ CONFIG_ESP_WIFI_ENABLE_SAE_PK=y
+@@ -1225,7 +1225,7 @@ CONFIG_LWIP_LOCAL_HOSTNAME="espressif"
+ # CONFIG_LWIP_CHECK_THREAD_SAFETY is not set
+ CONFIG_LWIP_DNS_SUPPORT_MDNS_QUERIES=y
+ # CONFIG_LWIP_L2_TO_L3_COPY is not set
+-# CONFIG_LWIP_IRAM_OPTIMIZATION is not set
++CONFIG_LWIP_IRAM_OPTIMIZATION=y
+ CONFIG_LWIP_TIMERS_ONDEMAND=y
+ CONFIG_LWIP_MAX_SOCKETS=10
+ # CONFIG_LWIP_USE_ONLY_LWIP_SELECT is not set
 @@ -1865,8 +1865,8 @@ CONFIG_ESP32_PHY_CALIBRATION_AND_DATA_STORAGE=y
  # CONFIG_ESP32_PHY_INIT_DATA_IN_PARTITION is not set
  CONFIG_ESP32_PHY_MAX_WIFI_TX_POWER=20
@@ -46,7 +63,7 @@ index 2faed80..24fdf92 100644
  CONFIG_SPIRAM_SUPPORT=y
  CONFIG_ESP32_SPIRAM_SUPPORT=y
  # CONFIG_WIFI_LWIP_ALLOCATION_FROM_SPIRAM_FIRST is not set
-@@ -1931,12 +1931,8 @@ CONFIG_ESP32_WIFI_TX_BUFFER_TYPE=0
+@@ -1931,19 +1931,15 @@ CONFIG_ESP32_WIFI_TX_BUFFER_TYPE=0
  CONFIG_ESP32_WIFI_STATIC_TX_BUFFER_NUM=8
  CONFIG_ESP32_WIFI_CACHE_TX_BUFFER_NUM=32
  # CONFIG_ESP32_WIFI_CSI_ENABLED is not set
@@ -61,6 +78,14 @@ index 2faed80..24fdf92 100644
  # CONFIG_ESP32_WIFI_AMSDU_TX_ENABLED is not set
  CONFIG_ESP32_WIFI_NVS_ENABLED=y
  CONFIG_ESP32_WIFI_TASK_PINNED_TO_CORE_0=y
+ # CONFIG_ESP32_WIFI_TASK_PINNED_TO_CORE_1 is not set
+ CONFIG_ESP32_WIFI_SOFTAP_BEACON_MAX_LEN=752
+ CONFIG_ESP32_WIFI_MGMT_SBUF_NUM=32
+-# CONFIG_ESP32_WIFI_IRAM_OPT is not set
++CONFIG_ESP32_WIFI_IRAM_OPT=y
+ CONFIG_ESP32_WIFI_RX_IRAM_OPT=y
+ CONFIG_ESP32_WIFI_ENABLE_WPA3_SAE=y
+ CONFIG_ESP32_WIFI_ENABLE_WPA3_OWE_STA=y
 diff --git a/snapclient/components/lightsnapcast/player.c b/snapclient/components/lightsnapcast/player.c
 index ba4cb64..9128c4f 100644
 --- a/snapclient/components/lightsnapcast/player.c
@@ -86,7 +111,7 @@ index ba4cb64..9128c4f 100644
                 ((shortMedian > hardResyncThreshold) ||
                  (shortMedian < -hardResyncThreshold)))) 
 diff --git a/snapclient/components/network_interface/wifi_interface.c b/snapclient/components/network_interface/wifi_interface.c
-index ae620b6..bb7eeff 100644
+index ae620b6..8adf6a1 100644
 --- a/snapclient/components/network_interface/wifi_interface.c
 +++ b/snapclient/components/network_interface/wifi_interface.c
 @@ -34,7 +34,7 @@
@@ -98,7 +123,7 @@ index ae620b6..bb7eeff 100644
  #endif
  #endif
  
-@@ -202,11 +202,12 @@ void wifi_start(void) {
+@@ -202,11 +202,13 @@ void wifi_start(void) {
  #if ENABLE_WIFI_PROVISIONING
    /* Start Wi-Fi station */
    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
@@ -106,7 +131,8 @@ index ae620b6..bb7eeff 100644
  
 -  ESP_ERROR_CHECK(esp_wifi_set_protocol(
 -      WIFI_IF_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N));
-+  ESP_ERROR_CHECK(esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_11G));
++  ESP_ERROR_CHECK(
++      esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N));
  
 -  ESP_ERROR_CHECK(esp_wifi_set_bandwidth(WIFI_IF_STA, WIFI_BW_HT40));
 +  ESP_ERROR_CHECK(esp_wifi_set_bandwidth(WIFI_IF_STA, WIFI_BW_HT20));
