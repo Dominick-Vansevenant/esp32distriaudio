@@ -24,7 +24,7 @@ Spotify app
 
 - Server: Docker op Ubuntu/Debian, een kleine Linux machine, of LXC/VM.
 - Spotify endpoint: `Spotify Whole House`.
-- Server stream: `48000:16:2`, FLAC, `chunk_ms=40`.
+- Server stream: `48000:16:2`, PCM, `chunk_ms=80`.
 - Snapserver buffer: `6000 ms`.
 - ESP32 client latency: `2000 ms`.
 - ESP32-A1S board: AI Thinker / ES8388 audio codec.
@@ -80,11 +80,13 @@ Voor een tweede board:
 .\esp32\flash-esp32-a1s.ps1 -Port COM7
 ```
 
-De standaard firmware in het flashscript is de `stable-wifi-audio-esp-ai-thinker` build. De oudere testbuild kan nog met:
+De standaard firmware in het flashscript is de `stable-wifi-audio-esp-ai-thinker` build.
 
 ```powershell
-.\esp32\flash-esp32-a1s.ps1 -Port COM5 -Firmware audio-first-esp-ai-thinker
+.\esp32\ota-update-esp32-a1s.ps1 -Ip 192.168.230.60
 ```
+
+Als de ESP32 al draait en poort `8032` open heeft, kan dezelfde build ook via OTA worden geplaatst met het OTA-script.
 
 Na flashen configureer je de Wi-Fi via de webinterface/provisioning van de firmware. De ESP32 moet dezelfde netwerklaag kunnen bereiken als de Snapserver.
 

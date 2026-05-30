@@ -6,7 +6,7 @@ The container runs:
 
 - `librespot` as Spotify Connect endpoint `Spotify Whole House`
 - `ffmpeg` to resample Spotify PCM from 44.1 kHz to 48 kHz
-- `snapserver` to distribute FLAC-encoded audio to ESP32-A1S Snapcast clients
+- `snapserver` to distribute PCM audio to ESP32-A1S Snapcast clients with 80 ms chunks
 - a small dashboard on port `8080` for clients, groups, quality graphs, and logs
 - optional `avahi-daemon` for mDNS discovery
 
@@ -33,7 +33,7 @@ The dashboard can:
 - rename Snapcast clients and groups
 - switch a group to another Snapcast stream
 - show ping latency and connection state graphs
-- show `snapserver`, `librespot`, dashboard, and idle-mute logs
+- show `snapserver`, `librespot`, dashboard, idle-mute, and ESP32-watchdog logs
 - try Wi-Fi changes when the ESP32 firmware exposes an HTTP Wi-Fi endpoint
 
 The dashboard stores virtual group names in the `/data` volume. It does not store Wi-Fi passwords after a request. It talks to Snapserver over the local JSON-RPC port inside the host-network container.

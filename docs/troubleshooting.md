@@ -49,7 +49,7 @@ Let op: `snapcast-idle-mute` is experimenteel en staat standaard uit. Het kan ge
 
 ## Audio is te snel of distorted
 
-Gebruik de audio-first ESP32 firmware in deze repo. De standaard ESP-AI-Thinker firmware gaf in de testsetup te snelle/distorted audio.
+Gebruik de `stable-wifi-audio-esp-ai-thinker` ESP32 firmware in deze repo. Die combineert de ES8388 audio-instellingen met stabielere Wi-Fi-instellingen.
 
 ## Gehakkel
 
@@ -61,11 +61,12 @@ ping -c 20 <esp-ip>
 
 In de testsetup was ESP1 stabieler dan ESP2. ESP2 had hoge jitter en Snapserver disconnects. Mogelijke fixes:
 
+- Update de ESP32 via OTA of UART naar `stable-wifi-audio-esp-ai-thinker`.
 - ESP dichter bij het access point.
 - Andere USB-voeding.
 - Kortere of betere USB-kabel.
 - Alleen 2.4 GHz SSID gebruiken.
-- ESP2 ook exact dezelfde audio-first firmware geven.
+- Als poort `8032` bereikbaar is: `.\esp32\ota-update-esp32-a1s.ps1 -Ip <esp-ip>`.
 
 ## Server is herstart
 

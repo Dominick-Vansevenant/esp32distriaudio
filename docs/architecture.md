@@ -7,7 +7,7 @@ De ESP32-A1S is goed als goedkope audio-client, maar niet als centrale Spotify/S
 - Spotify Connect discovery en login via `librespot`.
 - Audio decoding naar PCM.
 - Resampling van 44.1 kHz naar 48 kHz via `ffmpeg`.
-- FLAC-encoding en distributie naar meerdere clients via `snapserver`.
+- Distributie naar meerdere clients via `snapserver`.
 - Groepen, volumes, latency en buffering.
 
 ## Datastroom
@@ -17,7 +17,7 @@ Spotify app
   -> librespot --backend pipe
   -> ffmpeg -f s16le -ar 44100 -ac 2 -> -ar 48000
   -> /tmp/snapfifo
-  -> snapserver source Spotify (FLAC, 40 ms chunks)
+  -> snapserver source Spotify (PCM, 80 ms chunks)
   -> ESP32-A1S Snapcast clients
 ```
 

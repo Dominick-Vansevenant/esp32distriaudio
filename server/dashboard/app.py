@@ -304,6 +304,30 @@ def process_up(pattern):
         return False
 
 
+def unit_active(unit):
+    try:
+        proc = subprocess.run(
+            ["systemctl", "is-active", "--quiet", unit],
+            capture_output=True,
+            text=True,
+            timeout=2,
+            check=False,
+        )
+        return proc.returncode == 0
+    except Exception:
+        return False
+
+
+def watchdog_active():
+    if unit_active("snapcast-esp32-watchdog.timer") or unit_active("snapcast-esp32-watchdog.service"):
+        return True
+    if os.environ.get("ENABLE_ESP32_WATCHDOG", "1") != "0":
+        if Path("/usr/local/bin/snapcast-esp32-watchdog.py").exists():
+            return True
+        return process_up("snapcast-esp32-watchdog")
+    return False
+
+
 def collect_metrics_once():
     item = {
         "ts": int(time.time()),
@@ -312,6 +336,7 @@ def collect_metrics_once():
             "librespot": process_up("librespot"),
             "ffmpeg": process_up("ffmpeg"),
             "avahi": process_up("avahi-daemon"),
+            "esp32-watchdog": watchdog_active(),
         },
         "clients": [],
         "snapcast_ok": False,
@@ -440,6 +465,7 @@ class Handler(BaseHTTPRequestHandler):
                 "librespot": (LOG_DIR / "librespot.log", "librespot-snapcast.service"),
                 "dashboard": LOG_DIR / "dashboard.log",
                 "idle-mute": LOG_DIR / "idle-mute.log",
+                "esp32-watchdog": (LOG_DIR / "esp32-watchdog.log", "snapcast-esp32-watchdog.service"),
             }
             if name not in allowed:
                 self.send_json({"ok": False, "error": "unknown log"}, 400)

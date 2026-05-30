@@ -12,14 +12,15 @@ Geteste hardware:
 
 ## Werkende firmwarevariant
 
-De binaries in `esp32/firmware/audio-first-esp-ai-thinker/` zijn gebaseerd op Sonocotta/Esparagus Snapclient voor ESP-AI-Thinker, met experimentele audio-first wijzigingen:
+De standaardvariant staat in `esp32/firmware/stable-wifi-audio-esp-ai-thinker/`. Ze is gebaseerd op Sonocotta/Esparagus Snapclient voor ESP-AI-Thinker, met wijzigingen voor stabielere 2.4 GHz audio:
 
 - AI Thinker / ES8388 board profile.
-- I2S MSB slot format ingeschakeld.
-- BCLK inversie geforceerd voor dit board.
-- Harde Snapcast resync en sample-insert/delete correctie tijdelijk uitgeschakeld.
+- Wi-Fi power-save uitgeschakeld.
+- Wi-Fi bandbreedte op HT20 in plaats van HT40.
+- I2S MSB slot format ingeschakeld en BCLK inversie geforceerd voor dit board.
+- Sample insertion uitgeschakeld, zodat de player APLL clock tuning gebruikt.
 
-Deze variant was nodig omdat de standaardfirmware audio te snel/distorted liet klinken. Door de sync-correctie tijdelijk uit te schakelen werd het audiosignaal bruikbaar. Dit is dus praktisch werkend, maar nog geen perfecte upstream-ready patch.
+Deze variant verminderde de ping-jitter op `ESP32-A1S-1` duidelijk in de testsetup.
 
 ## Flashen
 
@@ -36,6 +37,16 @@ Voor een tweede board:
 ```
 
 Gebruik de UART micro-USB poort van de ESP32-A1S.
+
+## OTA-update
+
+Als de ESP32 al draait en poort `8032` bereikbaar is, kun je alleen de app via Wi-Fi updaten:
+
+```powershell
+.\esp32\ota-update-esp32-a1s.ps1 -Ip 192.168.230.60
+```
+
+De OTA-server op de ESP32 is eenvoudig. Het script gebruikt daarom HTTP/1.0 en schakelt `Expect: 100-continue` uit.
 
 ## Wi-Fi
 

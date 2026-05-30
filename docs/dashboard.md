@@ -37,7 +37,7 @@ De grafieken zijn lichtgewicht metingen vanuit de container:
 
 - ping latency naar de ESP32 IP-adressen
 - verbonden/niet verbonden status volgens Snapserver
-- service-status van `snapserver`, `librespot`, `ffmpeg` en `avahi`
+- service-status van `snapserver`, `librespot`, `ffmpeg`, `avahi` en de ESP32-watchdog
 
 Korte pieken van honderden milliseconden zijn een sterke aanwijzing voor Wi-Fi stalls. Dat past bij haperingen die pas na een tijdje optreden.
 
@@ -49,6 +49,7 @@ De container schrijft logs naar `/data/logs`:
 - `librespot.log`
 - `dashboard.log`
 - `idle-mute.log`
+- `esp32-watchdog.log`
 
 Het dashboard toont de laatste regels van die bestanden. Voor volledige logs kun je nog steeds gebruiken:
 
