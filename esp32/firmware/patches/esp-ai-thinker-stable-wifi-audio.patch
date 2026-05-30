@@ -1,7 +1,7 @@
 diff --git a/configs/sdkconfig.esp-ai-thinker b/configs/sdkconfig.esp-ai-thinker
 --- a/configs/sdkconfig.esp-ai-thinker
 +++ b/configs/sdkconfig.esp-ai-thinker
-@@ -352,7 +352,9 @@ CONFIG_WEB_PORT=80
+@@ -352,7 +352,9 @@ CONFIG_SNAPCLIENT_NAME="ESP32-AI-Thinker"
  CONFIG_WEB_PORT=80
  # end of HTTP Server Setting
  
@@ -12,10 +12,30 @@ diff --git a/configs/sdkconfig.esp-ai-thinker b/configs/sdkconfig.esp-ai-thinker
  # end of Snapclient Configuration
  
  #
+@@ -795,7 +797,7 @@ CONFIG_ESP_PHY_CALIBRATION_AND_DATA_STORAGE=y
+ # CONFIG_ESP_PHY_INIT_DATA_IN_PARTITION is not set
+ CONFIG_ESP_PHY_MAX_WIFI_TX_POWER=20
+ CONFIG_ESP_PHY_MAX_TX_POWER=20
+-CONFIG_ESP_PHY_REDUCE_TX_POWER=y
++# CONFIG_ESP_PHY_REDUCE_TX_POWER is not set
+ CONFIG_ESP_PHY_RF_CAL_PARTIAL=y
+ # CONFIG_ESP_PHY_RF_CAL_NONE is not set
+ # CONFIG_ESP_PHY_RF_CAL_FULL is not set
+@@ -1865,8 +1867,8 @@ CONFIG_ESP32_PHY_CALIBRATION_AND_DATA_STORAGE=y
+ # CONFIG_ESP32_PHY_INIT_DATA_IN_PARTITION is not set
+ CONFIG_ESP32_PHY_MAX_WIFI_TX_POWER=20
+ CONFIG_ESP32_PHY_MAX_TX_POWER=20
+-CONFIG_REDUCE_PHY_TX_POWER=y
+-CONFIG_ESP32_REDUCE_PHY_TX_POWER=y
++# CONFIG_REDUCE_PHY_TX_POWER is not set
++# CONFIG_ESP32_REDUCE_PHY_TX_POWER is not set
+ CONFIG_SPIRAM_SUPPORT=y
+ CONFIG_ESP32_SPIRAM_SUPPORT=y
+ # CONFIG_WIFI_LWIP_ALLOCATION_FROM_SPIRAM_FIRST is not set
 diff --git a/snapclient/components/network_interface/wifi_interface.c b/snapclient/components/network_interface/wifi_interface.c
 --- a/snapclient/components/network_interface/wifi_interface.c
 +++ b/snapclient/components/network_interface/wifi_interface.c
-@@ -202,11 +202,12 @@ void wifi_start(void) {
+@@ -202,11 +202,13 @@ void wifi_start(void) {
  #if ENABLE_WIFI_PROVISIONING
    /* Start Wi-Fi station */
    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
@@ -26,6 +46,7 @@ diff --git a/snapclient/components/network_interface/wifi_interface.c b/snapclie
  
 -  ESP_ERROR_CHECK(esp_wifi_set_bandwidth(WIFI_IF_STA, WIFI_BW_HT40));
 +  ESP_ERROR_CHECK(esp_wifi_set_bandwidth(WIFI_IF_STA, WIFI_BW_HT20));
++  ESP_ERROR_CHECK(esp_wifi_set_max_tx_power(78));
  
    wifi_config_t wifi_config;
    ESP_ERROR_CHECK(esp_wifi_get_config(WIFI_IF_STA, &wifi_config));
