@@ -7,6 +7,8 @@ Changes versus the upstream ESP-AI-Thinker config:
 - Wi-Fi power save disabled.
 - Wi-Fi bandwidth forced to 20 MHz.
 - Wi-Fi TX power reduction disabled and max TX power requested.
+- Improv provisioning stops after 10 seconds instead of 3 minutes.
+- ESP32 mDNS advertising is disabled during normal audio runtime.
 - Sample insertion disabled.
 - I2S MSB format enabled.
 - BCLK inversion enabled.

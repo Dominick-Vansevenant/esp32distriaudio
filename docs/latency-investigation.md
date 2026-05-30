@@ -32,6 +32,8 @@ The patch in `esp32/firmware/patches/esp-ai-thinker-stable-wifi-audio.patch` cha
 - disable Wi-Fi power save with `esp_wifi_set_ps(WIFI_PS_NONE)`;
 - use 20 MHz Wi-Fi bandwidth with `WIFI_BW_HT20`;
 - request maximum Wi-Fi TX power and disable reduced TX power config;
+- stop Improv Wi-Fi provisioning after 10 seconds instead of 3 minutes;
+- disable ESP-side mDNS advertising during normal audio runtime;
 - keep ES8388-friendly I2S settings with MSB format and inverted BCLK;
 - disable sample insertion so the player uses APLL clock tuning instead.
 

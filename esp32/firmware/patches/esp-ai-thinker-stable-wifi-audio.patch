@@ -1,4 +1,5 @@
 diff --git a/configs/sdkconfig.esp-ai-thinker b/configs/sdkconfig.esp-ai-thinker
+index 2faed80..f7da993 100644
 --- a/configs/sdkconfig.esp-ai-thinker
 +++ b/configs/sdkconfig.esp-ai-thinker
 @@ -352,7 +352,9 @@ CONFIG_SNAPCLIENT_NAME="ESP32-AI-Thinker"
@@ -33,8 +34,18 @@ diff --git a/configs/sdkconfig.esp-ai-thinker b/configs/sdkconfig.esp-ai-thinker
  CONFIG_ESP32_SPIRAM_SUPPORT=y
  # CONFIG_WIFI_LWIP_ALLOCATION_FROM_SPIRAM_FIRST is not set
 diff --git a/snapclient/components/network_interface/wifi_interface.c b/snapclient/components/network_interface/wifi_interface.c
+index ae620b6..c5a55e5 100644
 --- a/snapclient/components/network_interface/wifi_interface.c
 +++ b/snapclient/components/network_interface/wifi_interface.c
+@@ -34,7 +34,7 @@
+ #ifdef CONFIG_IMPROV_DEINIT_DELAY_MS
+ #define IMPROV_DEINIT_DELAY_MS CONFIG_IMPROV_DEINIT_DELAY_MS
+ #else
+-#define IMPROV_DEINIT_DELAY_MS 3*60000
++#define IMPROV_DEINIT_DELAY_MS 10000
+ #endif
+ #endif
+ 
 @@ -202,11 +202,13 @@ void wifi_start(void) {
  #if ENABLE_WIFI_PROVISIONING
    /* Start Wi-Fi station */
@@ -50,3 +61,18 @@ diff --git a/snapclient/components/network_interface/wifi_interface.c b/snapclie
  
    wifi_config_t wifi_config;
    ESP_ERROR_CHECK(esp_wifi_get_config(WIFI_IF_STA, &wifi_config));
+diff --git a/snapclient/main/main.c b/snapclient/main/main.c
+index 06b070d..a66fb0f 100644
+--- a/snapclient/main/main.c
++++ b/snapclient/main/main.c
+@@ -1534,7 +1534,9 @@ void app_main(void) {
+   //  ESP_LOGI(TAG, "Setup ws server");
+   //  websocket_if_start();
+ 
+-  net_mdns_register(mdns_hostname);
++  // Keep the audio runtime quiet: OTA remains reachable by IP on port 8032.
++  // mDNS advertising can add multicast traffic and short Wi-Fi stalls.
++  // net_mdns_register(mdns_hostname);
+ #ifdef CONFIG_SNAPCLIENT_SNTP_ENABLE
+   set_time_from_sntp();
+ #endif
