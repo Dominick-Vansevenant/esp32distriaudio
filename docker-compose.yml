@@ -11,7 +11,7 @@ services:
       - spotify-whole-house-cache:/var/cache/librespot
     environment:
       ENABLE_AVAHI: "1"
-      ENABLE_IDLE_MUTE: "1"
+      ENABLE_IDLE_MUTE: "0"
       SNAPCAST_CLIENTS: "70:4B:CA:25:53:C0,70:4B:CA:24:D7:B4"
 
 volumes:

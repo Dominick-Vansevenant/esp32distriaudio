@@ -41,6 +41,6 @@ systemctl daemon-reload
 systemctl enable --now avahi-daemon.service
 systemctl enable --now snapserver.service
 systemctl enable --now librespot-snapcast.service
-systemctl enable --now snapcast-idle-mute.service
+systemctl disable --now snapcast-idle-mute.service >/dev/null 2>&1 || true
 
 echo "Done. Select 'Spotify Whole House' in Spotify."

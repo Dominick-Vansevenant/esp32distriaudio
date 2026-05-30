@@ -45,7 +45,7 @@ Controleer of de clients niet gemute zijn en in de juiste groep zitten:
 sudo ./tools/snapcast-activate-two-esp32.sh
 ```
 
-Let op: `snapcast-idle-mute` mute de ESP32 clients automatisch wanneer Spotify idle/gepauzeerd is. Dat voorkomt getik/geruis bij pauze. Zodra Spotify weer `playing` is, worden de clients automatisch unmuted.
+Let op: `snapcast-idle-mute` is experimenteel en staat standaard uit. Het kan getik/geruis bij pauze maskeren, maar in de testsetup maakte het hickups erger door extra Snapcast control traffic en mute/unmute timing.
 
 ## Audio is te snel of distorted
 
