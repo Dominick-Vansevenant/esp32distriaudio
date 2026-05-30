@@ -1,15 +1,16 @@
 :root {
   color-scheme: dark;
-  --bg: #121416;
-  --panel: #1b2024;
-  --panel-2: #22282d;
-  --line: #353d44;
-  --text: #eef2f3;
-  --muted: #aab3b8;
-  --accent: #6db5ff;
-  --good: #54d17a;
-  --warn: #ffd36a;
-  --bad: #ff6f70;
+  --bg: #121412;
+  --surface: #1a1d19;
+  --surface-2: #232820;
+  --surface-3: #2b3128;
+  --line: #3b4437;
+  --text: #f3f5ef;
+  --muted: #b5bcae;
+  --accent: #82c66f;
+  --accent-2: #f0c45a;
+  --good: #6ed47b;
+  --bad: #f47d65;
 }
 
 * {
@@ -26,10 +27,10 @@ body {
 
 .topbar {
   align-items: center;
-  background: #171a1d;
+  background: #181b17;
   border-bottom: 1px solid var(--line);
   display: flex;
-  gap: 24px;
+  gap: 18px;
   justify-content: space-between;
   min-height: 76px;
   padding: 14px 22px;
@@ -60,10 +61,10 @@ h3 {
 
 #subtitle,
 .section-head span,
-#group-hint {
+#group-hint,
+.sub {
   color: var(--muted);
   font-size: 13px;
-  margin-top: 5px;
 }
 
 .status-strip {
@@ -83,6 +84,7 @@ h3 {
   gap: 6px;
   min-height: 28px;
   padding: 5px 8px;
+  white-space: nowrap;
 }
 
 .dot {
@@ -101,7 +103,7 @@ h3 {
 }
 
 .tabs {
-  background: #171a1d;
+  background: #181b17;
   border-bottom: 1px solid var(--line);
   display: flex;
   gap: 4px;
@@ -112,7 +114,7 @@ h3 {
 button,
 select,
 input {
-  background: var(--panel-2);
+  background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: 6px;
   color: var(--text);
@@ -121,12 +123,16 @@ input {
 
 button {
   cursor: pointer;
-  min-height: 34px;
-  padding: 7px 11px;
+  min-height: 36px;
+  padding: 8px 12px;
 }
 
-button:hover {
+button:hover,
+button:focus,
+select:focus,
+input:focus {
   border-color: var(--accent);
+  outline: none;
 }
 
 .tab {
@@ -135,7 +141,7 @@ button:hover {
   border-bottom: 3px solid transparent;
   border-radius: 0;
   color: var(--muted);
-  min-height: 44px;
+  min-height: 46px;
 }
 
 .tab.is-active {
@@ -160,101 +166,174 @@ main {
   display: flex;
   gap: 12px;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
-.table-wrap,
+.devices-grid,
 .groups,
+.quality-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.devices-grid {
+  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+}
+
+.device-card,
+.group-block,
 .quality-grid > div,
+.wifi-form,
 pre {
-  background: var(--panel);
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 8px;
 }
 
-.table-wrap {
-  overflow-x: auto;
-}
-
-table {
-  border-collapse: collapse;
-  min-width: 900px;
-  width: 100%;
-}
-
-th,
-td {
-  border-bottom: 1px solid var(--line);
-  font-size: 13px;
-  padding: 10px 12px;
-  text-align: left;
-  white-space: nowrap;
-}
-
-th {
-  color: var(--muted);
-  font-weight: 600;
-}
-
-tr:last-child td {
-  border-bottom: 0;
-}
-
-.name-main {
-  font-weight: 700;
-}
-
-.sub {
-  color: var(--muted);
-  font-size: 12px;
-  margin-top: 2px;
-}
-
-.groups {
+.device-card {
   display: grid;
   gap: 12px;
-  padding: 12px;
+  min-width: 0;
+  padding: 14px;
 }
 
-.group-block {
-  background: #171a1d;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 12px;
+.device-card.is-compact {
+  background: #20251d;
+  padding: 10px;
 }
 
-.group-title {
+.device-card.is-dragging {
+  opacity: 0.55;
+}
+
+.device-card-head,
+.device-footer,
+.group-title,
+.group-actions,
+.new-group {
   align-items: center;
   display: flex;
   gap: 10px;
   justify-content: space-between;
-  margin-bottom: 10px;
 }
 
-.client-checks {
+.name-input,
+.group-name {
+  font-weight: 700;
+  min-width: 0;
+  width: 100%;
+}
+
+.device-meta {
+  color: var(--muted);
+  display: grid;
+  font-size: 13px;
+  gap: 6px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.device-meta span,
+.sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.device-controls {
+  display: grid;
+  gap: 10px;
+}
+
+.slider-row,
+.latency-row,
+.wifi-form label {
+  align-items: center;
   display: grid;
   gap: 8px;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  margin: 12px 0;
+  grid-template-columns: 80px minmax(0, 1fr) 48px;
 }
 
-label {
-  align-items: center;
-  color: var(--text);
-  display: flex;
-  gap: 8px;
-  min-height: 30px;
+.latency-row {
+  grid-template-columns: 80px 120px;
+}
+
+input[type="range"] {
+  accent-color: var(--accent);
+  min-width: 0;
 }
 
 select,
-input[type="number"] {
-  min-height: 34px;
-  padding: 6px 8px;
+input[type="number"],
+input[type="text"],
+input[type="password"],
+input:not([type]) {
+  min-height: 36px;
+  padding: 7px 9px;
+}
+
+.new-group {
+  background: #181b17;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  justify-content: flex-start;
+  margin-bottom: 14px;
+  padding: 12px;
+}
+
+.new-group input {
+  max-width: 360px;
+  width: 100%;
+}
+
+.groups {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.group-block {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.group-block.is-over {
+  border-color: var(--accent-2);
+}
+
+.group-block.is-virtual {
+  border-style: dashed;
+}
+
+.dropzone {
+  display: grid;
+  gap: 10px;
+  min-height: 120px;
+}
+
+.empty-drop {
+  align-items: center;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  display: flex;
+  justify-content: center;
+  min-height: 120px;
+  padding: 16px;
+  text-align: center;
+}
+
+.wifi-form {
+  display: grid;
+  gap: 14px;
+  max-width: 720px;
+  padding: 14px;
+}
+
+.wifi-form label {
+  grid-template-columns: 110px minmax(0, 1fr);
 }
 
 .quality-grid {
-  display: grid;
-  gap: 14px;
+  grid-template-columns: 1fr;
 }
 
 .quality-grid > div {
@@ -268,7 +347,7 @@ canvas {
 }
 
 pre {
-  color: #d7dde1;
+  color: #e0e5dc;
   font-family: Consolas, Menlo, monospace;
   font-size: 12px;
   line-height: 1.45;
@@ -280,12 +359,12 @@ pre {
 }
 
 #toast {
-  background: #27313a;
+  background: #232820;
   border: 1px solid var(--line);
   border-radius: 8px;
   bottom: 18px;
   display: none;
-  max-width: 420px;
+  max-width: min(520px, calc(100vw - 36px));
   padding: 10px 12px;
   position: fixed;
   right: 18px;
@@ -294,12 +373,32 @@ pre {
 @media (max-width: 760px) {
   .topbar,
   .section-head,
-  .group-title {
-    align-items: flex-start;
+  .group-title,
+  .new-group {
+    align-items: stretch;
     flex-direction: column;
   }
 
   main {
     padding: 12px;
+  }
+
+  .devices-grid,
+  .groups {
+    grid-template-columns: 1fr;
+  }
+
+  .device-meta,
+  .slider-row,
+  .latency-row,
+  .wifi-form label {
+    grid-template-columns: 1fr;
+  }
+
+  .group-actions,
+  .device-card-head,
+  .device-footer {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

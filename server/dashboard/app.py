@@ -6,6 +6,8 @@ import socket
 import subprocess
 import threading
 import time
+import urllib.error
+import urllib.request
 from collections import deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -17,6 +19,8 @@ SNAPCAST_PORT = int(os.environ.get("SNAPCAST_PORT", "1705"))
 DASHBOARD_PORT = int(os.environ.get("DASHBOARD_PORT", "8080"))
 METRICS_INTERVAL = int(os.environ.get("METRICS_INTERVAL", "5"))
 LOG_DIR = Path(os.environ.get("LOG_DIR", "/data/logs"))
+DEFAULT_STATE_DIR = "/data" if Path("/data").exists() else "/var/lib/esp32distriaudio"
+STATE_FILE = Path(os.environ.get("DASHBOARD_STATE_FILE", str(Path(DEFAULT_STATE_DIR) / "dashboard-state.json")))
 STATIC_DIR = Path(__file__).with_name("static")
 CLIENT_LABELS = {}
 
@@ -26,6 +30,7 @@ for item in os.environ.get("SNAPCAST_CLIENT_LABELS", "").split(","):
         CLIENT_LABELS[key.strip().lower()] = value.strip()
 
 metrics_lock = threading.Lock()
+state_lock = threading.Lock()
 metrics = deque(maxlen=1440)
 rpc_counter = 10
 
@@ -57,6 +62,38 @@ def get_snap_status():
     return rpc("Server.GetStatus")
 
 
+def read_dashboard_state():
+    with state_lock:
+        try:
+            data = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+        except (FileNotFoundError, json.JSONDecodeError):
+            data = {}
+        data.setdefault("virtual_groups", [])
+        return data
+
+
+def write_dashboard_state(data):
+    with state_lock:
+        STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        STATE_FILE.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def dashboard_groups(status):
+    snap_ids = {group.get("id") for group in status.get("server", {}).get("groups", [])}
+    groups = []
+    changed = False
+    data = read_dashboard_state()
+    for group in data.get("virtual_groups", []):
+        if group.get("id") in snap_ids:
+            changed = True
+            continue
+        groups.append(group)
+    if changed:
+        data["virtual_groups"] = groups
+        write_dashboard_state(data)
+    return groups
+
+
 def flatten_clients(status):
     server = status.get("server", {})
     groups = server.get("groups", [])
@@ -66,6 +103,8 @@ def flatten_clients(status):
             host = client.get("host", {})
             cfg = client.get("config", {})
             client_id = client.get("id", "")
+            if not client.get("connected") and host.get("arch") != "xtensa":
+                continue
             mac = host.get("mac", client_id)
             name = cfg.get("name") or CLIENT_LABELS.get(client_id.lower()) or CLIENT_LABELS.get(mac.lower())
             if not name:
@@ -86,6 +125,116 @@ def flatten_clients(status):
                 }
             )
     return clients
+
+
+def find_group(status, group_id):
+    for group in status.get("server", {}).get("groups", []):
+        if group.get("id") == group_id:
+            return group
+    return None
+
+
+def find_client_group(status, client_id):
+    for group in status.get("server", {}).get("groups", []):
+        if any(client.get("id") == client_id for client in group.get("clients", [])):
+            return group
+    return None
+
+
+def create_virtual_group(name):
+    clean_name = (name or "").strip() or "Nieuwe groep"
+    data = read_dashboard_state()
+    group = {"id": f"dash-{int(time.time() * 1000)}", "name": clean_name}
+    data["virtual_groups"].append(group)
+    write_dashboard_state(data)
+    return group
+
+
+def delete_virtual_group(group_id):
+    data = read_dashboard_state()
+    before = len(data.get("virtual_groups", []))
+    data["virtual_groups"] = [group for group in data.get("virtual_groups", []) if group.get("id") != group_id]
+    write_dashboard_state(data)
+    return {"deleted": before != len(data["virtual_groups"])}
+
+
+def virtual_group_by_id(group_id):
+    for group in read_dashboard_state().get("virtual_groups", []):
+        if group.get("id") == group_id:
+            return group
+    return None
+
+
+def move_client_to_group(client_id, target_group_id):
+    status = get_snap_status()
+    target = find_group(status, target_group_id)
+    source = find_client_group(status, client_id)
+    if not source:
+        raise RuntimeError("client not found")
+
+    if target:
+        clients = [client.get("id") for client in target.get("clients", []) if client.get("id")]
+        if client_id not in clients:
+            clients.append(client_id)
+        return rpc("Group.SetClients", {"id": target_group_id, "clients": clients})
+
+    virtual = virtual_group_by_id(target_group_id)
+    if not virtual:
+        raise RuntimeError("group not found")
+
+    source_clients = [client.get("id") for client in source.get("clients", []) if client.get("id")]
+    if client_id not in source_clients:
+        raise RuntimeError("client not in source group")
+
+    remaining = [item for item in source_clients if item != client_id]
+    if remaining:
+        rpc("Group.SetClients", {"id": source.get("id"), "clients": remaining})
+        for _ in range(10):
+            time.sleep(0.2)
+            updated = get_snap_status()
+            new_group = find_client_group(updated, client_id)
+            if new_group and new_group.get("id") != source.get("id"):
+                rpc("Group.SetName", {"id": new_group.get("id"), "name": virtual.get("name", "Nieuwe groep")})
+                delete_virtual_group(target_group_id)
+                return {"group_id": new_group.get("id")}
+        raise RuntimeError("Snapcast heeft het device niet naar een nieuwe groep verplaatst")
+
+    rpc("Group.SetName", {"id": source.get("id"), "name": virtual.get("name", "Nieuwe groep")})
+    delete_virtual_group(target_group_id)
+    return {"group_id": source.get("id")}
+
+
+def set_device_wifi(ip, ssid, password):
+    if not ip:
+        raise RuntimeError("device heeft geen IP-adres")
+    payload = json.dumps({"ssid": ssid, "password": password}).encode("utf-8")
+    endpoints = [
+        f"http://{ip}/api/wifi",
+        f"http://{ip}/api/wifi/settings",
+        f"http://{ip}/wifi",
+    ]
+    errors = []
+    for endpoint in endpoints:
+        request = urllib.request.Request(
+            endpoint,
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=4) as response:
+                text = response.read().decode("utf-8", "replace")
+                if 200 <= response.status < 300:
+                    return {"endpoint": endpoint, "response": text}
+                errors.append(f"{endpoint}: HTTP {response.status}")
+        except urllib.error.HTTPError as exc:
+            errors.append(f"{endpoint}: HTTP {exc.code}")
+        except Exception as exc:
+            errors.append(f"{endpoint}: {exc}")
+    raise RuntimeError(
+        "Deze ESP32-firmware lijkt Wi-Fi wijzigen via HTTP nog niet te ondersteunen. "
+        "Flash/provision via USB of voeg een firmware-endpoint toe. Details: " + "; ".join(errors[-2:])
+    )
 
 
 def ping_host(ip):
@@ -111,8 +260,11 @@ def ping_host(ip):
 
 
 def process_up(pattern):
-    proc = subprocess.run(["pgrep", "-f", pattern], capture_output=True, text=True, check=False)
-    return proc.returncode == 0
+    try:
+        proc = subprocess.run(["pgrep", "-f", pattern], capture_output=True, text=True, check=False)
+        return proc.returncode == 0
+    except FileNotFoundError:
+        return False
 
 
 def collect_metrics_once():
@@ -233,6 +385,7 @@ class Handler(BaseHTTPRequestHandler):
                     {
                         "ok": True,
                         "snapcast": status,
+                        "dashboard_groups": dashboard_groups(status),
                         "clients": flatten_clients(status),
                         "metrics": history[-240:],
                         "services": history[-1]["services"] if history else {},
@@ -275,10 +428,18 @@ class Handler(BaseHTTPRequestHandler):
             action = payload.get("action")
             if action == "set_group_clients":
                 result = rpc("Group.SetClients", {"id": payload["group_id"], "clients": payload["clients"]})
+            elif action == "create_virtual_group":
+                result = create_virtual_group(payload.get("name", "Nieuwe groep"))
+            elif action == "delete_virtual_group":
+                result = delete_virtual_group(payload["group_id"])
+            elif action == "move_client_to_group":
+                result = move_client_to_group(payload["client_id"], payload["group_id"])
             elif action == "set_group_stream":
                 result = rpc("Group.SetStream", {"id": payload["group_id"], "stream_id": payload["stream_id"]})
             elif action == "set_group_name":
                 result = rpc("Group.SetName", {"id": payload["group_id"], "name": payload["name"]})
+            elif action == "set_client_name":
+                result = rpc("Client.SetName", {"id": payload["client_id"], "name": payload["name"].strip()})
             elif action == "set_client_volume":
                 result = rpc(
                     "Client.SetVolume",
@@ -292,6 +453,8 @@ class Handler(BaseHTTPRequestHandler):
                 )
             elif action == "set_client_latency":
                 result = rpc("Client.SetLatency", {"id": payload["client_id"], "latency": int(payload["latency"])})
+            elif action == "set_device_wifi":
+                result = set_device_wifi(payload.get("ip", ""), payload.get("ssid", ""), payload.get("password", ""))
             else:
                 self.send_json({"ok": False, "error": "unknown action"}, 400)
                 return
@@ -303,6 +466,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     LOG_DIR.mkdir(parents=True, exist_ok=True)
+    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
     threading.Thread(target=metrics_loop, daemon=True).start()
     server = ThreadingHTTPServer(("0.0.0.0", DASHBOARD_PORT), Handler)
     print(f"dashboard listening on 0.0.0.0:{DASHBOARD_PORT}", flush=True)

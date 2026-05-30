@@ -36,7 +36,7 @@ install -m 0755 server/librespot-snapcast-wrapper.sh /usr/local/bin/librespot-sn
 install -m 0755 server/snapcast-idle-mute.py /usr/local/bin/snapcast-idle-mute.py
 install -m 0644 server/systemd/librespot-snapcast.service /etc/systemd/system/librespot-snapcast.service
 install -m 0644 server/systemd/snapcast-idle-mute.service /etc/systemd/system/snapcast-idle-mute.service
-mkdir -p /opt/esp32distriaudio/server /var/log/esp32distriaudio
+mkdir -p /opt/esp32distriaudio/server /var/log/esp32distriaudio /var/lib/esp32distriaudio
 cp -a server/dashboard /opt/esp32distriaudio/server/
 install -m 0644 server/systemd/esp32distriaudio-dashboard.service /etc/systemd/system/esp32distriaudio-dashboard.service
 

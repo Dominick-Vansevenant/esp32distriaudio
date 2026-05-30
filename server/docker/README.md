@@ -28,13 +28,15 @@ http://<server-ip>:8080
 
 The dashboard can:
 
-- show Snapcast clients, IP addresses, groups, stream, volume, mute, and latency
-- move clients into an existing Snapcast group
+- show Snapcast clients, IP addresses, groups, stream, volume sliders, mute, and latency
+- add dashboard groups and drag clients into groups
+- rename Snapcast clients and groups
 - switch a group to another Snapcast stream
 - show ping latency and connection state graphs
 - show `snapserver`, `librespot`, dashboard, and idle-mute logs
+- try Wi-Fi changes when the ESP32 firmware exposes an HTTP Wi-Fi endpoint
 
-The dashboard stores no credentials. It talks to Snapserver over the local JSON-RPC port inside the host-network container.
+The dashboard stores virtual group names in the `/data` volume. It does not store Wi-Fi passwords after a request. It talks to Snapserver over the local JSON-RPC port inside the host-network container.
 
 ## Status
 

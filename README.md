@@ -56,7 +56,7 @@ Open daarna het dashboard:
 http://<server-ip>:8080
 ```
 
-Daar zie je de ESP32 clients, Snapcast groepen, ping/verbinding grafieken, service-status en logs.
+Daar zie je de ESP32 clients, Snapcast groepen, ping/verbinding grafieken, service-status en logs. Je kunt er groepen toevoegen, clients naar groepen slepen, devices/groepen hernoemen, volume met sliders sturen en Wi-Fi wijzigen zodra de ESP32-firmware daar een HTTP-endpoint voor aanbiedt.
 
 ## Bare-metal alternatief
 

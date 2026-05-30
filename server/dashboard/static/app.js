@@ -2,12 +2,20 @@ let state = null;
 
 const $ = (id) => document.getElementById(id);
 
+function esc(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
 function toast(message) {
   const node = $("toast");
   node.textContent = message;
   node.style.display = "block";
   clearTimeout(window.toastTimer);
-  window.toastTimer = setTimeout(() => (node.style.display = "none"), 2800);
+  window.toastTimer = setTimeout(() => (node.style.display = "none"), 3800);
 }
 
 async function api(path, options = {}) {
@@ -29,45 +37,83 @@ function latestMetricFor(clientId) {
   return null;
 }
 
+function snapGroups() {
+  const visibleClients = new Set((state?.clients || []).map((client) => client.id));
+  return (state?.snapcast?.server?.groups || []).filter(
+    (group) => (group.clients || []).some((client) => visibleClients.has(client.id)) || group.name
+  );
+}
+
+function allGroups() {
+  return [...snapGroups(), ...(state?.dashboard_groups || []).map((group) => ({ ...group, virtual: true, clients: [] }))];
+}
+
+function streams() {
+  return state?.snapcast?.server?.streams || [];
+}
+
 function renderServices() {
   const services = state?.services || {};
   $("service-status").innerHTML = Object.entries(services)
-    .map(
-      ([name, ok]) =>
-        `<span class="pill"><span class="dot ${ok ? "ok" : "fail"}"></span>${name}</span>`
-    )
+    .map(([name, ok]) => `<span class="pill"><span class="dot ${ok ? "ok" : "fail"}"></span>${esc(name)}</span>`)
     .join("");
 }
 
-function renderDevices() {
-  const rows = state.clients
-    .map((client) => {
-      const metric = latestMetricFor(client.id);
-      const ping = metric?.rtt_ms == null ? "-" : `${Math.round(metric.rtt_ms)} ms`;
-      const pingClass = metric?.ping_ok ? "ok" : "fail";
-      const volume = client.volume || {};
-      return `<tr>
-        <td>
-          <div class="name-main">${client.name}</div>
-          <div class="sub">${client.id}</div>
-        </td>
-        <td>${client.ip || "-"}</td>
-        <td>${client.group_name || client.group_id || "-"}</td>
-        <td>${client.stream_id || "-"}</td>
-        <td><span class="pill"><span class="dot ${pingClass}"></span>${ping}</span></td>
-        <td>
-          <input type="number" min="0" max="100" value="${volume.percent ?? 100}" data-volume="${client.id}">
-          <button data-mute="${client.id}">${volume.muted ? "Unmute" : "Mute"}</button>
-        </td>
-        <td>
-          <input type="number" min="0" max="5000" step="100" value="${client.latency ?? 0}" data-latency="${client.id}">
-        </td>
-      </tr>`;
-    })
-    .join("");
-  $("devices").innerHTML = rows || `<tr><td colspan="7">Geen clients gevonden.</td></tr>`;
+function deviceCard(client, compact = false) {
+  const metric = latestMetricFor(client.id);
+  const ping = metric?.rtt_ms == null ? "-" : `${Math.round(metric.rtt_ms)} ms`;
+  const pingClass = metric?.ping_ok ? "ok" : "fail";
+  const volume = client.volume || {};
+  const muted = Boolean(volume.muted);
+  return `<article class="device-card ${compact ? "is-compact" : ""}" draggable="true" data-client-id="${esc(client.id)}">
+    <div class="device-card-head">
+      <input class="name-input" value="${esc(client.name)}" data-name="${esc(client.id)}" aria-label="Device naam">
+      <span class="pill"><span class="dot ${client.connected ? "ok" : "fail"}"></span>${client.connected ? "online" : "offline"}</span>
+    </div>
+    <div class="device-meta">
+      <span>${esc(client.ip || "-")}</span>
+      <span>${esc(client.group_name || client.group_id || "-")}</span>
+      <span>${esc(client.stream_id || "-")}</span>
+    </div>
+    <div class="device-controls">
+      <label class="slider-row">
+        <span>Volume</span>
+        <input type="range" min="0" max="100" value="${volume.percent ?? 100}" data-volume="${esc(client.id)}">
+        <output>${volume.percent ?? 100}%</output>
+      </label>
+      <button data-mute="${esc(client.id)}">${muted ? "Unmute" : "Mute"}</button>
+      <label class="latency-row">
+        <span>Latency</span>
+        <input type="number" min="0" max="5000" step="100" value="${client.latency ?? 0}" data-latency="${esc(client.id)}">
+      </label>
+    </div>
+    <div class="device-footer">
+      <span class="pill"><span class="dot ${pingClass}"></span>${ping}</span>
+      <span class="sub">${esc(client.id)}</span>
+    </div>
+  </article>`;
+}
 
-  document.querySelectorAll("[data-volume]").forEach((input) => {
+function bindDeviceActions(root = document) {
+  root.querySelectorAll("[data-client-id]").forEach((card) => {
+    card.addEventListener("dragstart", (event) => {
+      event.dataTransfer.setData("text/plain", card.dataset.clientId);
+      event.dataTransfer.effectAllowed = "move";
+      card.classList.add("is-dragging");
+    });
+    card.addEventListener("dragend", () => card.classList.remove("is-dragging"));
+  });
+
+  root.querySelectorAll("[data-name]").forEach((input) => {
+    input.addEventListener("change", async () => {
+      await postAction({ action: "set_client_name", client_id: input.dataset.name, name: input.value });
+    });
+  });
+
+  root.querySelectorAll("[data-volume]").forEach((input) => {
+    input.addEventListener("input", () => {
+      input.parentElement.querySelector("output").textContent = `${input.value}%`;
+    });
     input.addEventListener("change", async () => {
       const client = state.clients.find((item) => item.id === input.dataset.volume);
       await postAction({
@@ -79,7 +125,7 @@ function renderDevices() {
     });
   });
 
-  document.querySelectorAll("[data-mute]").forEach((button) => {
+  root.querySelectorAll("[data-mute]").forEach((button) => {
     button.addEventListener("click", async () => {
       const client = state.clients.find((item) => item.id === button.dataset.mute);
       await postAction({
@@ -91,56 +137,68 @@ function renderDevices() {
     });
   });
 
-  document.querySelectorAll("[data-latency]").forEach((input) => {
+  root.querySelectorAll("[data-latency]").forEach((input) => {
     input.addEventListener("change", async () => {
-      await postAction({
-        action: "set_client_latency",
-        client_id: input.dataset.latency,
-        latency: Number(input.value),
-      });
+      await postAction({ action: "set_client_latency", client_id: input.dataset.latency, latency: Number(input.value) });
     });
   });
 }
 
-function renderGroups() {
-  const groups = state.snapcast.server.groups || [];
-  const streams = state.snapcast.server.streams || [];
-  $("group-hint").textContent = `${groups.length} groepen, ${state.clients.length} clients`;
+function renderDevices() {
+  $("devices-grid").innerHTML = state.clients.map((client) => deviceCard(client)).join("") || `<p>Geen clients gevonden.</p>`;
+  bindDeviceActions($("devices-grid"));
+}
 
-  $("groups-list").innerHTML = groups
-    .map((group) => {
-      const assigned = new Set((group.clients || []).map((client) => client.id));
-      const checks = state.clients
-        .map(
-          (client) => `<label>
-            <input type="checkbox" value="${client.id}" data-group-client="${group.id}" ${
-            assigned.has(client.id) ? "checked" : ""
-          }>
-            <span>${client.name} <span class="sub">${client.ip || client.id}</span></span>
-          </label>`
-        )
-        .join("");
-      const streamOptions = streams
-        .map(
-          (stream) =>
-            `<option value="${stream.id}" ${stream.id === group.stream_id ? "selected" : ""}>${stream.id}</option>`
-        )
-        .join("");
-      return `<div class="group-block">
-        <div class="group-title">
-          <div>
-            <div class="name-main">${group.name || group.id}</div>
-            <div class="sub">${group.id}</div>
-          </div>
-          <div>
-            <select data-stream="${group.id}">${streamOptions}</select>
-            <button data-apply-group="${group.id}">Toepassen</button>
-          </div>
-        </div>
-        <div class="client-checks">${checks}</div>
-      </div>`;
-    })
+function groupBlock(group) {
+  const clients = state.clients.filter((client) => client.group_id === group.id);
+  const streamOptions = streams()
+    .map((stream) => `<option value="${esc(stream.id)}" ${stream.id === group.stream_id ? "selected" : ""}>${esc(stream.id)}</option>`)
     .join("");
+  const empty = group.virtual ? "Sleep hier een device om de groep actief te maken." : "Geen devices in deze groep.";
+  return `<section class="group-block ${group.virtual ? "is-virtual" : ""}" data-drop-group="${esc(group.id)}">
+    <div class="group-title">
+      <div>
+        <input class="group-name" value="${esc(group.name || group.id)}" data-group-name="${esc(group.id)}" ${group.virtual ? "disabled" : ""}>
+        <div class="sub">${group.virtual ? "Nieuwe groep" : esc(group.id)}</div>
+      </div>
+      <div class="group-actions">
+        ${group.virtual ? `<button data-delete-virtual="${esc(group.id)}">Verwijder</button>` : `<select data-stream="${esc(group.id)}">${streamOptions}</select>`}
+      </div>
+    </div>
+    <div class="dropzone">
+      ${clients.map((client) => deviceCard(client, true)).join("") || `<div class="empty-drop">${empty}</div>`}
+    </div>
+  </section>`;
+}
+
+function renderGroups() {
+  const groups = allGroups();
+  $("group-hint").textContent = `${groups.length} groepen, ${state.clients.length} clients`;
+  $("groups-list").innerHTML = groups.map(groupBlock).join("") || `<p>Geen groepen gevonden.</p>`;
+  bindDeviceActions($("groups-list"));
+
+  $("new-group-form").onsubmit = async (event) => {
+    event.preventDefault();
+    const input = $("new-group-name");
+    await postAction({ action: "create_virtual_group", name: input.value || "Nieuwe groep" });
+    input.value = "";
+  };
+
+  document.querySelectorAll("[data-drop-group]").forEach((zone) => {
+    zone.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      zone.classList.add("is-over");
+    });
+    zone.addEventListener("dragleave", () => zone.classList.remove("is-over"));
+    zone.addEventListener("drop", async (event) => {
+      event.preventDefault();
+      zone.classList.remove("is-over");
+      const clientId = event.dataTransfer.getData("text/plain");
+      if (clientId) {
+        await postAction({ action: "move_client_to_group", client_id: clientId, group_id: zone.dataset.dropGroup });
+      }
+    });
+  });
 
   document.querySelectorAll("[data-stream]").forEach((select) => {
     select.addEventListener("change", async () => {
@@ -148,15 +206,23 @@ function renderGroups() {
     });
   });
 
-  document.querySelectorAll("[data-apply-group]").forEach((button) => {
-    button.addEventListener("click", async () => {
-      const groupId = button.dataset.applyGroup;
-      const clients = [...document.querySelectorAll(`[data-group-client="${groupId}"]:checked`)].map(
-        (input) => input.value
-      );
-      await postAction({ action: "set_group_clients", group_id: groupId, clients });
+  document.querySelectorAll("[data-group-name]").forEach((input) => {
+    input.addEventListener("change", async () => {
+      await postAction({ action: "set_group_name", group_id: input.dataset.groupName, name: input.value });
     });
   });
+
+  document.querySelectorAll("[data-delete-virtual]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      await postAction({ action: "delete_virtual_group", group_id: button.dataset.deleteVirtual });
+    });
+  });
+}
+
+function renderWifi() {
+  $("wifi-device").innerHTML = state.clients
+    .map((client) => `<option value="${esc(client.id)}">${esc(client.name)} - ${esc(client.ip || "geen IP")}</option>`)
+    .join("");
 }
 
 function drawChart(canvas, seriesByClient, maxY) {
@@ -164,9 +230,9 @@ function drawChart(canvas, seriesByClient, maxY) {
   const w = canvas.width;
   const h = canvas.height;
   ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = "#15191d";
+  ctx.fillStyle = "#151715";
   ctx.fillRect(0, 0, w, h);
-  ctx.strokeStyle = "#343d45";
+  ctx.strokeStyle = "#343b34";
   ctx.lineWidth = 1;
   for (let i = 0; i <= 4; i += 1) {
     const y = 20 + ((h - 40) * i) / 4;
@@ -176,7 +242,7 @@ function drawChart(canvas, seriesByClient, maxY) {
     ctx.stroke();
   }
 
-  const colors = ["#6db5ff", "#54d17a", "#ffd36a", "#ff6f70"];
+  const colors = ["#82c66f", "#f0c45a", "#70b7b4", "#f47d65"];
   Object.entries(seriesByClient).forEach(([name, points], index) => {
     ctx.strokeStyle = colors[index % colors.length];
     ctx.fillStyle = colors[index % colors.length];
@@ -195,10 +261,9 @@ function drawChart(canvas, seriesByClient, maxY) {
 
 function renderQuality() {
   const history = state.metrics || [];
-  const clients = state.clients;
   const pingSeries = {};
   const connectSeries = {};
-  clients.forEach((client) => {
+  state.clients.forEach((client) => {
     pingSeries[client.name] = history.map((item) => {
       const found = item.clients.find((entry) => entry.id === client.id);
       return { value: found?.rtt_ms ?? 0 };
@@ -235,6 +300,7 @@ function render() {
   renderServices();
   renderDevices();
   renderGroups();
+  renderWifi();
   renderQuality();
 }
 
@@ -258,6 +324,17 @@ document.querySelectorAll(".tab").forEach((tab) => {
 
 $("refresh").addEventListener("click", refresh);
 $("log-select").addEventListener("change", renderLogs);
+$("wifi-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const client = state.clients.find((item) => item.id === $("wifi-device").value);
+  await postAction({
+    action: "set_device_wifi",
+    client_id: client?.id,
+    ip: client?.ip,
+    ssid: $("wifi-ssid").value,
+    password: $("wifi-password").value,
+  });
+});
 
 refresh();
 setInterval(refresh, 5000);
