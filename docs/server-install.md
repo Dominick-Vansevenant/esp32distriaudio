@@ -67,6 +67,7 @@ Services controleren:
 ```sh
 systemctl status snapserver
 systemctl status librespot-snapcast
+systemctl status esp32distriaudio-dashboard
 systemctl status avahi-daemon
 ```
 

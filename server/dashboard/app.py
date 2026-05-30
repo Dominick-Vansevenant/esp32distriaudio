@@ -172,6 +172,22 @@ def tail_file(path, max_bytes=60000):
         return ""
 
 
+def journal_tail(unit, lines=300):
+    try:
+        proc = subprocess.run(
+            ["journalctl", "-u", unit, "-n", str(lines), "--no-pager"],
+            text=True,
+            capture_output=True,
+            timeout=3,
+            check=False,
+        )
+    except Exception:
+        return ""
+    if proc.returncode != 0:
+        return ""
+    return proc.stdout
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         return
@@ -230,15 +246,20 @@ class Handler(BaseHTTPRequestHandler):
             query = parse_qs(parsed.query)
             name = query.get("name", ["snapserver"])[0]
             allowed = {
-                "snapserver": LOG_DIR / "snapserver.log",
-                "librespot": LOG_DIR / "librespot.log",
+                "snapserver": (LOG_DIR / "snapserver.log", "snapserver.service"),
+                "librespot": (LOG_DIR / "librespot.log", "librespot-snapcast.service"),
                 "dashboard": LOG_DIR / "dashboard.log",
                 "idle-mute": LOG_DIR / "idle-mute.log",
             }
             if name not in allowed:
                 self.send_json({"ok": False, "error": "unknown log"}, 400)
                 return
-            self.send_json({"ok": True, "name": name, "text": tail_file(allowed[name])})
+            target = allowed[name]
+            if isinstance(target, tuple):
+                text = tail_file(target[0]) or journal_tail(target[1])
+            else:
+                text = tail_file(target)
+            self.send_json({"ok": True, "name": name, "text": text})
             return
 
         self.send_static(parsed.path)
