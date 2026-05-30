@@ -5,6 +5,7 @@ cleanup() {
   if [ -n "${LIBRESPOT_PID:-}" ]; then kill "$LIBRESPOT_PID" 2>/dev/null || true; fi
   if [ -n "${SNAPSERVER_PID:-}" ]; then kill "$SNAPSERVER_PID" 2>/dev/null || true; fi
   if [ -n "${IDLE_MUTE_PID:-}" ]; then kill "$IDLE_MUTE_PID" 2>/dev/null || true; fi
+  if [ -n "${WATCHDOG_PID:-}" ]; then kill "$WATCHDOG_PID" 2>/dev/null || true; fi
   if [ -n "${DASHBOARD_PID:-}" ]; then kill "$DASHBOARD_PID" 2>/dev/null || true; fi
   if [ -n "${AVAHI_PID:-}" ]; then kill "$AVAHI_PID" 2>/dev/null || true; fi
 }
@@ -33,7 +34,17 @@ if [ "${ENABLE_IDLE_MUTE:-1}" = "1" ]; then
   IDLE_MUTE_PID=$!
 fi
 
+if [ "${ENABLE_ESP32_WATCHDOG:-1}" = "1" ]; then
+  (
+    while true; do
+      /usr/local/bin/snapcast-esp32-watchdog.py 2>&1 | tee -a /data/logs/esp32-watchdog.log || true
+      sleep "${ESP32_WATCHDOG_INTERVAL:-30}"
+    done
+  ) &
+  WATCHDOG_PID=$!
+fi
+
 python3 /opt/esp32distriaudio-dashboard/app.py 2>&1 | tee -a /data/logs/dashboard.log &
 DASHBOARD_PID=$!
 
-wait -n "$SNAPSERVER_PID" "$LIBRESPOT_PID" "${IDLE_MUTE_PID:-$SNAPSERVER_PID}" "$DASHBOARD_PID"
+wait -n "$SNAPSERVER_PID" "$LIBRESPOT_PID" "${IDLE_MUTE_PID:-$SNAPSERVER_PID}" "${WATCHDOG_PID:-$SNAPSERVER_PID}" "$DASHBOARD_PID"

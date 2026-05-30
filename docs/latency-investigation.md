@@ -11,6 +11,7 @@
 
 - Snapcast client latency is set to `2000 ms` for both ESP32 clients.
 - Snapserver uses `codec=flac` and `chunk_ms=40` for the Spotify pipe. This reduces Wi-Fi bandwidth and packet rate compared with raw PCM at 20 ms chunks.
+- A server-side ESP32 watchdog closes stale Snapcast TCP sessions when Snapserver still sees a client as connected but the ESP32 IP is no longer reachable.
 
 ## Firmware root-cause candidate
 

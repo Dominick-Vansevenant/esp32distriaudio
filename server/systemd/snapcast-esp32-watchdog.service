@@ -1,0 +1,8 @@
+[Unit]
+Description=ESP32 Snapcast stale-session watchdog
+After=snapserver.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/snapcast-esp32-watchdog.py

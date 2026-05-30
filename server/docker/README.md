@@ -38,6 +38,19 @@ The dashboard can:
 
 The dashboard stores virtual group names in the `/data` volume. It does not store Wi-Fi passwords after a request. It talks to Snapserver over the local JSON-RPC port inside the host-network container.
 
+## ESP32 watchdog
+
+The image also runs `snapcast-esp32-watchdog.py` by default. It detects ESP32 clients that are still marked as connected by Snapserver while their IP address is no longer reachable. After repeated failures it closes the stale Snapcast TCP session so the server state becomes honest and the client can reconnect if its Wi-Fi stack recovers.
+
+Disable it with:
+
+```yaml
+environment:
+  ENABLE_ESP32_WATCHDOG: "0"
+```
+
+Adjust the loop interval with `ESP32_WATCHDOG_INTERVAL`, in seconds.
+
 ## Status
 
 ```sh

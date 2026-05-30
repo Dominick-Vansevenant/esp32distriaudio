@@ -34,8 +34,11 @@ fi
 
 install -m 0755 server/librespot-snapcast-wrapper.sh /usr/local/bin/librespot-snapcast-wrapper.sh
 install -m 0755 server/snapcast-idle-mute.py /usr/local/bin/snapcast-idle-mute.py
+install -m 0755 server/snapcast-esp32-watchdog.py /usr/local/bin/snapcast-esp32-watchdog.py
 install -m 0644 server/systemd/librespot-snapcast.service /etc/systemd/system/librespot-snapcast.service
 install -m 0644 server/systemd/snapcast-idle-mute.service /etc/systemd/system/snapcast-idle-mute.service
+install -m 0644 server/systemd/snapcast-esp32-watchdog.service /etc/systemd/system/snapcast-esp32-watchdog.service
+install -m 0644 server/systemd/snapcast-esp32-watchdog.timer /etc/systemd/system/snapcast-esp32-watchdog.timer
 mkdir -p /opt/esp32distriaudio/server /var/log/esp32distriaudio /var/lib/esp32distriaudio
 cp -a server/dashboard /opt/esp32distriaudio/server/
 install -m 0644 server/systemd/esp32distriaudio-dashboard.service /etc/systemd/system/esp32distriaudio-dashboard.service
@@ -48,6 +51,7 @@ systemctl enable --now avahi-daemon.service
 systemctl enable --now snapserver.service
 systemctl enable --now librespot-snapcast.service
 systemctl disable --now snapcast-idle-mute.service >/dev/null 2>&1 || true
+systemctl enable --now snapcast-esp32-watchdog.timer
 systemctl enable --now esp32distriaudio-dashboard.service
 
 echo "Done. Select 'Spotify Whole House' in Spotify. Dashboard: http://SERVER_IP:8080"

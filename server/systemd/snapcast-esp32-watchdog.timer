@@ -1,0 +1,11 @@
+[Unit]
+Description=Run ESP32 Snapcast stale-session watchdog
+
+[Timer]
+OnBootSec=90s
+OnUnitActiveSec=30s
+AccuracySec=5s
+Unit=snapcast-esp32-watchdog.service
+
+[Install]
+WantedBy=timers.target
