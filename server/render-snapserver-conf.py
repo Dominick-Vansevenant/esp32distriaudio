@@ -6,7 +6,7 @@ SOURCE_LINE = (
     "source = pipe:///tmp/snapfifo?"
     "name=Spotify&sampleformat=48000:16:2&codec=opus&chunk_ms=80"
 )
-BUFFER_LINE = "buffer = 30000"
+BUFFER_LINE = "buffer = 12000"
 
 
 def replace_or_append(lines, prefix, replacement):
