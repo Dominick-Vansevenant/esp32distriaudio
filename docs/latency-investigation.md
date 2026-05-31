@@ -26,17 +26,18 @@ The ESP32 Snapclient firmware has a few settings that are risky for continuous 2
 
 - Wi-Fi power save is not explicitly disabled in `wifi_interface.c`.
 - The station bandwidth is forced to `WIFI_BW_HT40`, which is fragile on crowded 2.4 GHz channels.
-- The first ESP32 Wi-Fi test variant disabled AMPDU and forced 802.11g-only operation, but long pings still showed multi-second receive stalls. The next candidate keeps 802.11n enabled on HT20, lowers the AMPDU block-ack windows, and fixes the ESP32's 802.11 TX data rate to 12 Mbit/s OFDM. This aims to make TCP ACKs and ping replies less sensitive to rate-scaling retries on the weak ESP32-A1S 2.4 GHz link.
+- The first ESP32 Wi-Fi test variant disabled AMPDU and forced 802.11g-only operation, but long pings still showed multi-second receive stalls. The second candidate kept 802.11n enabled on HT20 with smaller AMPDU block-ack windows and improved packet loss, but still showed long latency bursts.
+- A follow-up test fixed the ESP32's 802.11 TX data rate to 12 Mbit/s OFDM. That made the long-ping result worse, so fixed TX-rate operation is no longer used.
+- The current candidate keeps 802.11n enabled on HT20, lowers the AMPDU block-ack windows, and repeatedly reasserts `WIFI_PS_NONE` at runtime. This targets AP buffering / station modem-sleep style latency bursts, which still appeared even while Snapserver was stopped.
 - The upstream AI Thinker config enables sample insertion. On the tested ESP32-A1S / ES8388 boards this correlated with fast/distorted playback.
 
 Espressif documents that modem-sleep keeps the station associated but periodically powers down RF/PHY/BB, and that `WIFI_PS_NONE` disables modem-sleep to minimize real-time receive delay. Espressif also documents both HT20 and HT40 Wi-Fi bandwidth modes for ESP32 station operation.
 
 The patch in `esp32/firmware/patches/esp-ai-thinker-stable-wifi-audio.patch` changes the firmware to:
 
-- disable Wi-Fi power save with `esp_wifi_set_ps(WIFI_PS_NONE)`;
+- disable Wi-Fi power save with `esp_wifi_set_ps(WIFI_PS_NONE)` before and after Wi-Fi start, then reassert it periodically at runtime;
 - use 20 MHz Wi-Fi bandwidth with `WIFI_BW_HT20`;
 - keep station mode on `WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N`, force HT20, and reduce AMPDU TX/RX block-ack windows to lower burst size without falling back to 11g-only airtime;
-- set `esp_wifi_config_80211_tx_rate(WIFI_IF_STA, WIFI_PHY_RATE_12M)` after Wi-Fi init and before start;
 - enable Wi-Fi and LwIP IRAM optimizations to reduce stalls when flash/cache activity occurs;
 - relax the Snapclient hard-resync threshold from 2 ms to 75 ms and avoid hard-resyncing only because the chunk queue is briefly empty;
 - request maximum Wi-Fi TX power and disable reduced TX power config;

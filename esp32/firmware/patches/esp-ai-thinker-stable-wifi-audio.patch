@@ -109,9 +109,25 @@ index ba4cb64..9128c4f 100644
                 ((shortMedian > hardResyncThreshold) ||
                  (shortMedian < -hardResyncThreshold)))) 
 diff --git a/snapclient/components/network_interface/wifi_interface.c b/snapclient/components/network_interface/wifi_interface.c
-index ae620b6..b565781 100644
+index ae620b6..4876dde 100644
 --- a/snapclient/components/network_interface/wifi_interface.c
 +++ b/snapclient/components/network_interface/wifi_interface.c
+@@ -16,6 +16,7 @@
+ #include "esp_wifi.h"
+ #include "esp_wifi_types.h"
+ #include "freertos/FreeRTOS.h"
++#include "freertos/task.h"
+ #include "freertos/portmacro.h"
+ #include "freertos/semphr.h"
+ #include "network_interface.h"
+@@ -24,7 +25,6 @@
+ 
+ #if ENABLE_WIFI_PROVISIONING
+ #include "wifi_provisioning.h"
+-#include "freertos/task.h"
+ #endif
+ 
+ /* Configurable delay (ms) before deinitializing improv provisioning after
 @@ -34,7 +34,7 @@
  #ifdef CONFIG_IMPROV_DEINIT_DELAY_MS
  #define IMPROV_DEINIT_DELAY_MS CONFIG_IMPROV_DEINIT_DELAY_MS
@@ -121,7 +137,38 @@ index ae620b6..b565781 100644
  #endif
  #endif
  
-@@ -202,11 +202,13 @@ void wifi_start(void) {
+@@ -76,6 +76,30 @@ static esp_netif_ip_info_t ip_info = {{0}, {0}, {0}};
+ static bool connected = false;
+ static SemaphoreHandle_t connIpSemaphoreHandle = NULL;
+ 
++static void wifi_ps_none_task(void *pv) {
++  (void)pv;
++  while (true) {
++    esp_err_t err = esp_wifi_set_ps(WIFI_PS_NONE);
++    if (err != ESP_OK) {
++      ESP_LOGW(TAG, "failed to reassert WIFI_PS_NONE: %s", esp_err_to_name(err));
++    }
++    vTaskDelay(pdMS_TO_TICKS(10000));
++  }
++}
++
++static void ensure_wifi_ps_none_task(void) {
++  static bool wifi_ps_none_task_created = false;
++  if (!wifi_ps_none_task_created) {
++    BaseType_t r = xTaskCreate(wifi_ps_none_task, "wifi_ps_none", 2048, NULL,
++                               tskIDLE_PRIORITY + 1, NULL);
++    if (r != pdPASS) {
++      ESP_LOGW(TAG, "failed to create wifi_ps_none task");
++    } else {
++      wifi_ps_none_task_created = true;
++    }
++  }
++}
++
+ /* The event group allows multiple bits for each event,
+    but we only care about one event - are we connected
+    to the AP with an IP? */
+@@ -202,11 +226,12 @@ void wifi_start(void) {
  #if ENABLE_WIFI_PROVISIONING
    /* Start Wi-Fi station */
    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
@@ -134,11 +181,19 @@ index ae620b6..b565781 100644
 -  ESP_ERROR_CHECK(esp_wifi_set_bandwidth(WIFI_IF_STA, WIFI_BW_HT40));
 +  ESP_ERROR_CHECK(esp_wifi_set_bandwidth(WIFI_IF_STA, WIFI_BW_HT20));
 +  ESP_ERROR_CHECK(esp_wifi_set_max_tx_power(78));
-+  ESP_ERROR_CHECK(esp_wifi_config_80211_tx_rate(WIFI_IF_STA, WIFI_PHY_RATE_12M));
  
    wifi_config_t wifi_config;
    ESP_ERROR_CHECK(esp_wifi_get_config(WIFI_IF_STA, &wifi_config));
-@@ -253,6 +255,7 @@ void wifi_start(void) {
+@@ -221,6 +246,8 @@ void wifi_start(void) {
+                                              &lost_ip_event_handler, NULL));
+ 
+   ESP_ERROR_CHECK(esp_wifi_start());
++  ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
++  ensure_wifi_ps_none_task();
+ 
+   ESP_LOGI(TAG, "Starting provisioning");
+ 
+@@ -253,6 +280,7 @@ void wifi_start(void) {
  
    /* Start Wi-Fi station */
    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
@@ -146,6 +201,15 @@ index ae620b6..b565781 100644
    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
  
    ESP_ERROR_CHECK(esp_event_handler_register(
+@@ -263,6 +291,8 @@ void wifi_start(void) {
+                                              &lost_ip_event_handler, NULL));
+ 
+   ESP_ERROR_CHECK(esp_wifi_start());
++  ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
++  ensure_wifi_ps_none_task();
+ 
+   ESP_LOGI(TAG, "wifi_init_sta finished. Trying to connect to %s",
+            wifi_config.sta.ssid);
 diff --git a/snapclient/main/main.c b/snapclient/main/main.c
 index 06b070d..10ab7b1 100644
 --- a/snapclient/main/main.c
