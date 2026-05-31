@@ -210,22 +210,32 @@ index ae620b6..4876dde 100644
  
    ESP_LOGI(TAG, "wifi_init_sta finished. Trying to connect to %s",
             wifi_config.sta.ssid);
+diff --git a/snapclient/components/ui_http_server/CMakeLists.txt b/snapclient/components/ui_http_server/CMakeLists.txt
+index ca2b173..bc2ec66 100644
+--- a/snapclient/components/ui_http_server/CMakeLists.txt
++++ b/snapclient/components/ui_http_server/CMakeLists.txt
+@@ -1,6 +1,6 @@
+ idf_component_register(SRCS "ui_http_server.c"
+                        INCLUDE_DIRS "include"
+-                       REQUIRES esp_http_server settings_manager dsp_processor_settings tas5805m_settings
++                       REQUIRES esp_http_server esp_wifi settings_manager dsp_processor_settings tas5805m_settings
+                        PRIV_REQUIRES custom_board
+                        EMBED_TXTFILES html/index.html
+                                       html/index.js
 diff --git a/snapclient/components/ui_http_server/ui_http_server.c b/snapclient/components/ui_http_server/ui_http_server.c
-index b616a70..9d12889 100644
+index b616a70..457953c 100644
 --- a/snapclient/components/ui_http_server/ui_http_server.c
 +++ b/snapclient/components/ui_http_server/ui_http_server.c
-@@ -17,7 +17,9 @@
- #include "esp_err.h"
+@@ -18,6 +18,8 @@
  #include "esp_http_server.h"
  #include "esp_log.h"
--#include "esp_system.h"
-+#include "esp_system.h"
+ #include "esp_system.h"
 +#include "esp_wifi.h"
 +#include "esp_wifi_types.h"
  #include "freertos/FreeRTOS.h"
  #include "freertos/queue.h"
  #include "freertos/semphr.h"
-@@ -605,6 +605,40 @@ static esp_err_t favicon_get_handler(httpd_req_t *req) {
+@@ -605,6 +607,40 @@ static esp_err_t favicon_get_handler(httpd_req_t *req) {
  	return ESP_OK;
  }
  
@@ -266,7 +276,7 @@ index b616a70..9d12889 100644
  /* Restart handler: responds OK and schedules a restart shortly after */
  static void restart_task(void *pv) {
  	// give HTTP stack time to finish sending response
-@@ -1048,6 +1082,14 @@ esp_err_t start_server(const char *base_path, int port) {
+@@ -1048,6 +1084,14 @@ esp_err_t start_server(const char *base_path, int port) {
  	};
  	httpd_register_uri_handler(server, &_get_capabilities_handler);
  
