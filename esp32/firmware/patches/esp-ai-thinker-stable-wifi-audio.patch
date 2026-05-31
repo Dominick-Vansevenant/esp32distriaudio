@@ -210,6 +210,77 @@ index ae620b6..4876dde 100644
  
    ESP_LOGI(TAG, "wifi_init_sta finished. Trying to connect to %s",
             wifi_config.sta.ssid);
+diff --git a/snapclient/components/ui_http_server/ui_http_server.c b/snapclient/components/ui_http_server/ui_http_server.c
+index b616a70..9d12889 100644
+--- a/snapclient/components/ui_http_server/ui_http_server.c
++++ b/snapclient/components/ui_http_server/ui_http_server.c
+@@ -17,7 +17,9 @@
+ #include "esp_err.h"
+ #include "esp_http_server.h"
+ #include "esp_log.h"
+-#include "esp_system.h"
++#include "esp_system.h"
++#include "esp_wifi.h"
++#include "esp_wifi_types.h"
+ #include "freertos/FreeRTOS.h"
+ #include "freertos/queue.h"
+ #include "freertos/semphr.h"
+@@ -605,6 +605,40 @@ static esp_err_t favicon_get_handler(httpd_req_t *req) {
+ 	return ESP_OK;
+ }
+ 
++
++static esp_err_t wifi_status_get_handler(httpd_req_t *req) {
++	wifi_ap_record_t ap = {0};
++	uint8_t protocol = 0;
++	wifi_bandwidth_t bandwidth = WIFI_BW_HT20;
++	wifi_ps_type_t ps_type = WIFI_PS_NONE;
++	char ssid[33] = {0};
++	char response[512] = {0};
++
++	esp_err_t ap_err = esp_wifi_sta_get_ap_info(&ap);
++	esp_err_t protocol_err = esp_wifi_get_protocol(WIFI_IF_STA, &protocol);
++	esp_err_t bandwidth_err = esp_wifi_get_bandwidth(WIFI_IF_STA, &bandwidth);
++	esp_err_t ps_err = esp_wifi_get_ps(&ps_type);
++
++	if (ap_err == ESP_OK) {
++		memcpy(ssid, ap.ssid, sizeof(ap.ssid));
++		ssid[sizeof(ssid) - 1] = '\0';
++	}
++
++	snprintf(response, sizeof(response),
++			 "{\"connected\":%s,\"ssid\":\"%s\",\"bssid\":\"%02x:%02x:%02x:%02x:%02x:%02x\","
++			 "\"primary_channel\":%u,\"second_channel\":%u,\"rssi\":%d,"
++			 "\"protocol\":%u,\"bandwidth\":%u,\"power_save\":%u,"
++			 "\"ap_error\":%d,\"protocol_error\":%d,\"bandwidth_error\":%d,\"power_save_error\":%d}",
++			 ap_err == ESP_OK ? "true" : "false", ssid,
++			 ap.bssid[0], ap.bssid[1], ap.bssid[2], ap.bssid[3], ap.bssid[4], ap.bssid[5],
++			 ap.primary, ap.second, ap.rssi, protocol, bandwidth, ps_type,
++			 ap_err, protocol_err, bandwidth_err, ps_err);
++
++	set_cors_headers(req);
++	httpd_resp_set_type(req, "application/json");
++	httpd_resp_sendstr(req, response);
++	return ESP_OK;
++}
+ /* Restart handler: responds OK and schedules a restart shortly after */
+ static void restart_task(void *pv) {
+ 	// give HTTP stack time to finish sending response
+@@ -1048,6 +1082,14 @@ esp_err_t start_server(const char *base_path, int port) {
+ 	};
+ 	httpd_register_uri_handler(server, &_get_capabilities_handler);
+ 
++	
++	/* URI handler for Wi-Fi diagnostics */
++	httpd_uri_t _wifi_status_handler = {
++		.uri = "/wifi-status",
++		.method = HTTP_GET,
++		.handler = wifi_status_get_handler,
++	};
++	httpd_register_uri_handler(server, &_wifi_status_handler);
+ 	/* URI handler for favicon.ico */
+ 	httpd_uri_t _favicon_get_handler = {
+ 		.uri = "/favicon.ico",
 diff --git a/snapclient/main/main.c b/snapclient/main/main.c
 index 06b070d..10ab7b1 100644
 --- a/snapclient/main/main.c
