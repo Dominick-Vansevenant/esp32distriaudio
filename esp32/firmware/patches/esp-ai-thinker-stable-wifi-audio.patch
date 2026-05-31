@@ -109,7 +109,7 @@ index ba4cb64..9128c4f 100644
                 ((shortMedian > hardResyncThreshold) ||
                  (shortMedian < -hardResyncThreshold)))) 
 diff --git a/snapclient/components/network_interface/wifi_interface.c b/snapclient/components/network_interface/wifi_interface.c
-index ae620b6..7e52867 100644
+index ae620b6..b565781 100644
 --- a/snapclient/components/network_interface/wifi_interface.c
 +++ b/snapclient/components/network_interface/wifi_interface.c
 @@ -34,7 +34,7 @@
@@ -121,7 +121,7 @@ index ae620b6..7e52867 100644
  #endif
  #endif
  
-@@ -202,11 +202,12 @@ void wifi_start(void) {
+@@ -202,11 +202,13 @@ void wifi_start(void) {
  #if ENABLE_WIFI_PROVISIONING
    /* Start Wi-Fi station */
    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
@@ -134,10 +134,11 @@ index ae620b6..7e52867 100644
 -  ESP_ERROR_CHECK(esp_wifi_set_bandwidth(WIFI_IF_STA, WIFI_BW_HT40));
 +  ESP_ERROR_CHECK(esp_wifi_set_bandwidth(WIFI_IF_STA, WIFI_BW_HT20));
 +  ESP_ERROR_CHECK(esp_wifi_set_max_tx_power(78));
++  ESP_ERROR_CHECK(esp_wifi_config_80211_tx_rate(WIFI_IF_STA, WIFI_PHY_RATE_12M));
  
    wifi_config_t wifi_config;
    ESP_ERROR_CHECK(esp_wifi_get_config(WIFI_IF_STA, &wifi_config));
-@@ -253,6 +254,7 @@ void wifi_start(void) {
+@@ -253,6 +255,7 @@ void wifi_start(void) {
  
    /* Start Wi-Fi station */
    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
