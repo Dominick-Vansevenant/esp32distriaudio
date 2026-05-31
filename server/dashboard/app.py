@@ -148,9 +148,13 @@ def client_quality(history, client_id, window=60):
 
     ok = [sample for sample in samples if sample.get("ping_ok")]
     rtts = [sample.get("rtt_ms") for sample in ok if sample.get("rtt_ms") is not None]
-    loss_percent = round(100 * (len(samples) - len(ok)) / len(samples), 1)
+    max_rtts = [sample.get("rtt_max_ms", sample.get("rtt_ms")) for sample in ok if sample.get("rtt_max_ms", sample.get("rtt_ms")) is not None]
+    if any("loss_percent" in sample for sample in samples):
+        loss_percent = round(sum(float(sample.get("loss_percent", 100.0)) for sample in samples) / len(samples), 1)
+    else:
+        loss_percent = round(100 * (len(samples) - len(ok)) / len(samples), 1)
     avg_ms = round(sum(rtts) / len(rtts), 1) if rtts else None
-    max_ms = round(max(rtts), 1) if rtts else None
+    max_ms = round(max(max_rtts), 1) if max_rtts else None
 
     if loss_percent > 5 or (max_ms is not None and max_ms > 1000):
         state = "bad"
@@ -323,22 +327,26 @@ def set_device_wifi(ip, ssid, password):
 
 def ping_host(ip):
     if not ip:
-        return {"ok": False, "rtt_ms": None, "error": "no ip"}
+        return {"ok": False, "rtt_ms": None, "rtt_max_ms": None, "loss_percent": 100.0, "error": "no ip"}
     try:
         proc = subprocess.run(
-            ["ping", "-c", "1", "-W", "1", ip],
+            ["ping", "-c", "3", "-i", "0.2", "-W", "1", ip],
             text=True,
             capture_output=True,
-            timeout=2,
+            timeout=5,
             check=False,
         )
     except Exception as exc:
-        return {"ok": False, "rtt_ms": None, "error": str(exc)}
+        return {"ok": False, "rtt_ms": None, "rtt_max_ms": None, "loss_percent": 100.0, "error": str(exc)}
 
-    match = re.search(r"time[=<]([0-9.]+)\s*ms", proc.stdout)
+    loss_match = re.search(r"([0-9.]+)% packet loss", proc.stdout)
+    rtt_match = re.search(r"rtt [^=]+ = ([0-9.]+)/([0-9.]+)/([0-9.]+)/", proc.stdout)
+    loss_percent = float(loss_match.group(1)) if loss_match else (0.0 if proc.returncode == 0 else 100.0)
     return {
-        "ok": proc.returncode == 0,
-        "rtt_ms": float(match.group(1)) if match else None,
+        "ok": loss_percent < 100,
+        "rtt_ms": float(rtt_match.group(2)) if rtt_match else None,
+        "rtt_max_ms": float(rtt_match.group(3)) if rtt_match else None,
+        "loss_percent": loss_percent,
         "error": "" if proc.returncode == 0 else proc.stderr.strip() or proc.stdout.strip()[-160:],
     }
 
@@ -403,6 +411,8 @@ def collect_metrics_once():
                     "group_id": client["group_id"],
                     "stream_id": client["stream_id"],
                     "rtt_ms": ping["rtt_ms"],
+                    "rtt_max_ms": ping.get("rtt_max_ms"),
+                    "loss_percent": ping.get("loss_percent"),
                     "ping_ok": ping["ok"],
                 }
             )
