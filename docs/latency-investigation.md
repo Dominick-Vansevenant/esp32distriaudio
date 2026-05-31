@@ -37,7 +37,6 @@ The patch in `esp32/firmware/patches/esp-ai-thinker-stable-wifi-audio.patch` cha
 - disable AMPDU TX/RX aggregation and force station mode to `WIFI_PROTOCOL_11G`; Opus keeps the stream small enough that 11g airtime is acceptable;
 - enable Wi-Fi and LwIP IRAM optimizations to reduce stalls when flash/cache activity occurs;
 - relax the Snapclient hard-resync threshold from 2 ms to 75 ms and avoid hard-resyncing only because the chunk queue is briefly empty;
-- expose a cheap ESP HTTP `/status` endpoint for RSSI/channel/protocol/heap diagnostics without triggering Wi-Fi scans;
 - request maximum Wi-Fi TX power and disable reduced TX power config;
 - stop Improv Wi-Fi provisioning after 10 seconds instead of 3 minutes;
 - disable ESP-side mDNS advertising during normal audio runtime;

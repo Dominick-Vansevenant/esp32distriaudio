@@ -20,7 +20,6 @@ De standaardvariant staat in `esp32/firmware/stable-wifi-audio-esp-ai-thinker/`.
 - Wi-Fi AMPDU aggregation uitgeschakeld en station protocol op 802.11g-only gezet om 11n block-ack latency-spikes te vermijden. Opus houdt de airtime laag genoeg voor 11g.
 - Wi-Fi en LwIP IRAM-optimalisatie ingeschakeld.
 - Snapclient hard-resync minder agressief gemaakt, zodat de 12s Snapserver-buffer korte Wi-Fi stalls kan absorberen zonder I2S mute/reset.
-- HTTP `/status` endpoint toegevoegd voor runtime-diagnose: RSSI, Wi-Fi channel/protocol en heap.
 - I2S MSB slot format ingeschakeld en BCLK inversie geforceerd voor dit board.
 - Sample insertion uitgeschakeld, zodat de player APLL clock tuning gebruikt.
 
