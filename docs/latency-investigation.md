@@ -10,8 +10,8 @@
 
 ## Current mitigation
 
-- Snapcast client latency is set to `8000 ms` for both ESP32 clients.
-- Snapserver buffer is set to `12000 ms` to absorb occasional ESP32 radio stalls.
+- Snapcast client latency is set to `15000 ms` for both ESP32 clients.
+- Snapserver buffer is set to `30000 ms` to absorb occasional ESP32 radio stalls.
 - Snapserver uses `codec=opus` and `chunk_ms=80` for the Spotify pipe. This reduces Wi-Fi airtime from roughly PCM's 1.5 Mbit/s per client to Snapserver's Opus stream around 192 kbit/s, while keeping the packet rate lower than the original 20 ms chunks.
 - A server-side ESP32 watchdog closes stale Snapcast TCP sessions when Snapserver still sees a client as connected but the ESP32 IP is no longer reachable.
 - The watchdog also closes duplicate Snapcast TCP sessions per ESP32 IP. After OTA/reconnect testing, one ESP had five concurrent Snapcast streams to the same IP.
