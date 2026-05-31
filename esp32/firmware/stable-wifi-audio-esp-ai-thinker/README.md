@@ -1,14 +1,13 @@
 # Stable Wi-Fi/audio ESP-AI-Thinker firmware
 
-Built by GitHub Actions from commit `ad7d4c7` using `esp32/firmware/patches/esp-ai-thinker-stable-wifi-audio.patch`.
+Built by GitHub Actions from commit `1a42e9a` using `esp32/firmware/patches/esp-ai-thinker-stable-wifi-audio.patch`.
 
 Changes versus the upstream ESP-AI-Thinker config:
 
-- Wi-Fi power save disabled.
+- Wi-Fi power save disabled before and after Wi-Fi start, then reasserted periodically at runtime.
 - Wi-Fi bandwidth forced to 20 MHz.
 - Wi-Fi station protocol restricted to 802.11g/802.11n, with 802.11b disabled.
 - Wi-Fi AMPDU aggregation enabled with smaller block-ack windows.
-- ESP32 802.11 TX rate fixed at 12 Mbit/s OFDM for more stable TCP ACK timing.
 - Wi-Fi and LwIP IRAM optimizations enabled.
 - Snapclient hard-resync relaxed from 2 ms to 75 ms, and queue-empty no longer causes a hard resync unless the client is already late.
 - Opus chunk sizing fixed so `chkInFrames` uses the decoded sample count when Snapserver bundles multiple Opus frames per chunk.
@@ -31,8 +30,8 @@ Flash offsets:
 SHA256:
 
 ```text
-ec0b549b277e971c5f26cc2ee552b4f158b264b4026943a0ce6c9724a4f9604c  bootloader.bin
+10ca86772e1db70895a58cc18c1b4e43dcd215da815568443e6e3e7bf8685439  bootloader.bin
 7d2c7ac4888bfd75cd5f56e8d61f69595121183afc81556c876732fd3782c62f  ota_data_initial.bin
 f8a731f7f8f59c3826ea978062eedc49f822465de138718c794b5d7fce18abcf  partition-table.bin
-2f74ce4c51fd376fc087daea2b1874522571207e5a7d7a2f8c52cca466961dd3  snapclient.bin
+1f37158627b383ed46be071676b99fef08abd7d273c1de37ecb3ba6c9d59109a  snapclient.bin
 ```
