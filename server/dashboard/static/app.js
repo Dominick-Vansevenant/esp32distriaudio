@@ -62,10 +62,17 @@ function renderServices() {
 function deviceCard(client, compact = false, groupId = null) {
   const metric = latestMetricFor(client.id);
   const ping = metric?.rtt_ms == null ? "-" : `${Math.round(metric.rtt_ms)} ms`;
-  const pingClass = metric?.ping_ok ? "ok" : "fail";
+  const quality = client.quality || {};
+  const qualityState = quality.state || (metric?.ping_ok ? "good" : "bad");
+  const pingClass = qualityState === "good" ? "ok" : qualityState === "warn" ? "warn" : "fail";
+  const qualityBits = [
+    quality.label || (metric?.ping_ok ? "stabiel" : "geen ping"),
+    quality.loss_percent == null ? null : `${quality.loss_percent}% loss`,
+    quality.max_ms == null ? null : `max ${Math.round(quality.max_ms)} ms`,
+  ].filter(Boolean);
   const volume = client.volume || {};
   const muted = Boolean(volume.muted);
-  return `<article class="device-card ${compact ? "is-compact" : ""}" data-client-id="${esc(client.id)}">
+  return `<article class="device-card quality-${esc(qualityState)} ${compact ? "is-compact" : ""}" data-client-id="${esc(client.id)}">
     <div class="device-card-head">
       <button class="drag-handle" draggable="true" data-drag-client="${esc(client.id)}" aria-label="${esc(client.name)} verslepen" title="Verslepen">
         <span></span><span></span><span></span><span></span><span></span><span></span>
@@ -93,6 +100,7 @@ function deviceCard(client, compact = false, groupId = null) {
     </div>
     <div class="device-footer">
       <span class="pill"><span class="dot ${pingClass}"></span>${ping}</span>
+      <span class="pill quality-pill ${esc(qualityState)}">${esc(qualityBits.join(" · "))}</span>
       <span class="sub">${esc(client.id)}</span>
     </div>
   </article>`;

@@ -98,6 +98,10 @@ h3 {
   background: var(--good);
 }
 
+.warn {
+  background: var(--accent-2);
+}
+
 .fail {
   background: var(--bad);
 }
@@ -197,6 +201,14 @@ pre {
   padding: 14px;
 }
 
+.device-card.quality-warn {
+  border-color: var(--accent-2);
+}
+
+.device-card.quality-bad {
+  border-color: var(--bad);
+}
+
 .device-card.is-compact {
   background: #20251d;
   padding: 10px;
@@ -215,6 +227,29 @@ pre {
   display: flex;
   gap: 10px;
   justify-content: space-between;
+}
+
+.device-footer {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.quality-pill.warn {
+  background: transparent;
+  border-color: var(--accent-2);
+  color: var(--accent-2);
+}
+
+.quality-pill.bad {
+  background: transparent;
+  border-color: var(--bad);
+  color: var(--bad);
+}
+
+.quality-pill.good {
+  background: transparent;
+  border-color: var(--good);
+  color: var(--good);
 }
 
 .drag-handle {

@@ -129,6 +129,53 @@ def flatten_clients(status):
     return clients
 
 
+def client_quality(history, client_id, window=60):
+    samples = []
+    for item in history[-window:]:
+        for client in item.get("clients", []):
+            if client.get("id") == client_id:
+                samples.append(client)
+                break
+    if not samples:
+        return {
+            "state": "unknown",
+            "label": "geen meting",
+            "loss_percent": None,
+            "avg_ms": None,
+            "max_ms": None,
+            "samples": 0,
+        }
+
+    ok = [sample for sample in samples if sample.get("ping_ok")]
+    rtts = [sample.get("rtt_ms") for sample in ok if sample.get("rtt_ms") is not None]
+    loss_percent = round(100 * (len(samples) - len(ok)) / len(samples), 1)
+    avg_ms = round(sum(rtts) / len(rtts), 1) if rtts else None
+    max_ms = round(max(rtts), 1) if rtts else None
+
+    if loss_percent > 5 or (max_ms is not None and max_ms > 1000):
+        state = "bad"
+        label = "onbetrouwbaar"
+    elif loss_percent > 0 or (max_ms is not None and max_ms > 250) or (avg_ms is not None and avg_ms > 50):
+        state = "warn"
+        label = "jitter"
+    else:
+        state = "good"
+        label = "stabiel"
+
+    return {
+        "state": state,
+        "label": label,
+        "loss_percent": loss_percent,
+        "avg_ms": avg_ms,
+        "max_ms": max_ms,
+        "samples": len(samples),
+    }
+
+
+def enrich_clients(clients, history):
+    return [{**client, "quality": client_quality(history, client.get("id", ""))} for client in clients]
+
+
 def find_group(status, group_id):
     for group in status.get("server", {}).get("groups", []):
         if group.get("id") == group_id:
@@ -443,12 +490,13 @@ class Handler(BaseHTTPRequestHandler):
                 status = get_snap_status()
                 with metrics_lock:
                     history = list(metrics)
+                clients = flatten_clients(status)
                 self.send_json(
                     {
                         "ok": True,
                         "snapcast": status,
                         "dashboard_groups": dashboard_groups(status),
-                        "clients": flatten_clients(status),
+                        "clients": enrich_clients(clients, history),
                         "metrics": history[-240:],
                         "services": history[-1]["services"] if history else {},
                     }
