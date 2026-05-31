@@ -26,7 +26,7 @@ The ESP32 Snapclient firmware has a few settings that are risky for continuous 2
 
 - Wi-Fi power save is not explicitly disabled in `wifi_interface.c`.
 - The station bandwidth is forced to `WIFI_BW_HT40`, which is fragile on crowded 2.4 GHz channels.
-- The ESP32 11n/AMPDU path can introduce bursty receive latency on weak or busy 2.4 GHz links. The current test variant disables AMPDU and temporarily forces 802.11g-only operation.
+- The first ESP32 Wi-Fi test variant disabled AMPDU and forced 802.11g-only operation, but long pings still showed multi-second receive stalls. The next candidate keeps 802.11n enabled on HT20 and lowers the AMPDU block-ack windows, aiming for fewer TCP retransmit bursts without using fragile HT40.
 - The upstream AI Thinker config enables sample insertion. On the tested ESP32-A1S / ES8388 boards this correlated with fast/distorted playback.
 
 Espressif documents that modem-sleep keeps the station associated but periodically powers down RF/PHY/BB, and that `WIFI_PS_NONE` disables modem-sleep to minimize real-time receive delay. Espressif also documents both HT20 and HT40 Wi-Fi bandwidth modes for ESP32 station operation.
@@ -35,7 +35,7 @@ The patch in `esp32/firmware/patches/esp-ai-thinker-stable-wifi-audio.patch` cha
 
 - disable Wi-Fi power save with `esp_wifi_set_ps(WIFI_PS_NONE)`;
 - use 20 MHz Wi-Fi bandwidth with `WIFI_BW_HT20`;
-- disable AMPDU TX/RX aggregation and force station mode to `WIFI_PROTOCOL_11G`; Opus keeps the stream small enough that 11g airtime is acceptable;
+- keep station mode on `WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N`, force HT20, and reduce AMPDU TX/RX block-ack windows to lower burst size without falling back to 11g-only airtime;
 - enable Wi-Fi and LwIP IRAM optimizations to reduce stalls when flash/cache activity occurs;
 - relax the Snapclient hard-resync threshold from 2 ms to 75 ms and avoid hard-resyncing only because the chunk queue is briefly empty;
 - request maximum Wi-Fi TX power and disable reduced TX power config;

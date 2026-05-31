@@ -1,5 +1,5 @@
 diff --git a/configs/sdkconfig.esp-ai-thinker b/configs/sdkconfig.esp-ai-thinker
-index 2faed80..5638edb 100644
+index 2faed80..6e490fc 100644
 --- a/configs/sdkconfig.esp-ai-thinker
 +++ b/configs/sdkconfig.esp-ai-thinker
 @@ -352,7 +352,9 @@ CONFIG_SNAPCLIENT_NAME="ESP32-AI-Thinker"
@@ -22,16 +22,15 @@ index 2faed80..5638edb 100644
  CONFIG_ESP_PHY_RF_CAL_PARTIAL=y
  # CONFIG_ESP_PHY_RF_CAL_NONE is not set
  # CONFIG_ESP_PHY_RF_CAL_FULL is not set
-@@ -1024,17 +1026,15 @@ CONFIG_ESP_WIFI_TX_BUFFER_TYPE=0
- CONFIG_ESP_WIFI_STATIC_TX_BUFFER_NUM=8
+@@ -1025,16 +1027,16 @@ CONFIG_ESP_WIFI_STATIC_TX_BUFFER_NUM=8
  CONFIG_ESP_WIFI_CACHE_TX_BUFFER_NUM=32
  # CONFIG_ESP_WIFI_CSI_ENABLED is not set
--CONFIG_ESP_WIFI_AMPDU_TX_ENABLED=y
+ CONFIG_ESP_WIFI_AMPDU_TX_ENABLED=y
 -CONFIG_ESP_WIFI_TX_BA_WIN=8
--CONFIG_ESP_WIFI_AMPDU_RX_ENABLED=y
++CONFIG_ESP_WIFI_TX_BA_WIN=4
+ CONFIG_ESP_WIFI_AMPDU_RX_ENABLED=y
 -CONFIG_ESP_WIFI_RX_BA_WIN=16
-+# CONFIG_ESP_WIFI_AMPDU_TX_ENABLED is not set
-+# CONFIG_ESP_WIFI_AMPDU_RX_ENABLED is not set
++CONFIG_ESP_WIFI_RX_BA_WIN=8
  # CONFIG_ESP_WIFI_AMSDU_TX_ENABLED is not set
  CONFIG_ESP_WIFI_NVS_ENABLED=y
  CONFIG_ESP_WIFI_TASK_PINNED_TO_CORE_0=y
@@ -43,7 +42,7 @@ index 2faed80..5638edb 100644
  CONFIG_ESP_WIFI_RX_IRAM_OPT=y
  CONFIG_ESP_WIFI_ENABLE_WPA3_SAE=y
  CONFIG_ESP_WIFI_ENABLE_SAE_PK=y
-@@ -1225,7 +1225,7 @@ CONFIG_LWIP_LOCAL_HOSTNAME="espressif"
+@@ -1225,7 +1227,7 @@ CONFIG_LWIP_LOCAL_HOSTNAME="espressif"
  # CONFIG_LWIP_CHECK_THREAD_SAFETY is not set
  CONFIG_LWIP_DNS_SUPPORT_MDNS_QUERIES=y
  # CONFIG_LWIP_L2_TO_L3_COPY is not set
@@ -52,7 +51,7 @@ index 2faed80..5638edb 100644
  CONFIG_LWIP_TIMERS_ONDEMAND=y
  CONFIG_LWIP_MAX_SOCKETS=10
  # CONFIG_LWIP_USE_ONLY_LWIP_SELECT is not set
-@@ -1865,8 +1865,8 @@ CONFIG_ESP32_PHY_CALIBRATION_AND_DATA_STORAGE=y
+@@ -1865,8 +1867,8 @@ CONFIG_ESP32_PHY_CALIBRATION_AND_DATA_STORAGE=y
  # CONFIG_ESP32_PHY_INIT_DATA_IN_PARTITION is not set
  CONFIG_ESP32_PHY_MAX_WIFI_TX_POWER=20
  CONFIG_ESP32_PHY_MAX_TX_POWER=20
@@ -63,18 +62,17 @@ index 2faed80..5638edb 100644
  CONFIG_SPIRAM_SUPPORT=y
  CONFIG_ESP32_SPIRAM_SUPPORT=y
  # CONFIG_WIFI_LWIP_ALLOCATION_FROM_SPIRAM_FIRST is not set
-@@ -1931,19 +1931,15 @@ CONFIG_ESP32_WIFI_TX_BUFFER_TYPE=0
- CONFIG_ESP32_WIFI_STATIC_TX_BUFFER_NUM=8
+@@ -1932,18 +1934,16 @@ CONFIG_ESP32_WIFI_STATIC_TX_BUFFER_NUM=8
  CONFIG_ESP32_WIFI_CACHE_TX_BUFFER_NUM=32
  # CONFIG_ESP32_WIFI_CSI_ENABLED is not set
--CONFIG_ESP32_WIFI_AMPDU_TX_ENABLED=y
+ CONFIG_ESP32_WIFI_AMPDU_TX_ENABLED=y
 -CONFIG_ESP32_WIFI_TX_BA_WIN=8
--CONFIG_ESP32_WIFI_AMPDU_RX_ENABLED=y
++CONFIG_ESP32_WIFI_TX_BA_WIN=4
+ CONFIG_ESP32_WIFI_AMPDU_RX_ENABLED=y
 -CONFIG_ESP32_WIFI_AMPDU_RX_ENABLED=y
 -CONFIG_ESP32_WIFI_RX_BA_WIN=16
 -CONFIG_ESP32_WIFI_RX_BA_WIN=16
-+# CONFIG_ESP32_WIFI_AMPDU_TX_ENABLED is not set
-+# CONFIG_ESP32_WIFI_AMPDU_RX_ENABLED is not set
++CONFIG_ESP32_WIFI_RX_BA_WIN=8
  # CONFIG_ESP32_WIFI_AMSDU_TX_ENABLED is not set
  CONFIG_ESP32_WIFI_NVS_ENABLED=y
  CONFIG_ESP32_WIFI_TASK_PINNED_TO_CORE_0=y
@@ -111,7 +109,7 @@ index ba4cb64..9128c4f 100644
                 ((shortMedian > hardResyncThreshold) ||
                  (shortMedian < -hardResyncThreshold)))) 
 diff --git a/snapclient/components/network_interface/wifi_interface.c b/snapclient/components/network_interface/wifi_interface.c
-index ae620b6..bb7eeff 100644
+index ae620b6..7e52867 100644
 --- a/snapclient/components/network_interface/wifi_interface.c
 +++ b/snapclient/components/network_interface/wifi_interface.c
 @@ -34,7 +34,7 @@
@@ -131,7 +129,7 @@ index ae620b6..bb7eeff 100644
  
 -  ESP_ERROR_CHECK(esp_wifi_set_protocol(
 -      WIFI_IF_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N));
-+  ESP_ERROR_CHECK(esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_11G));
++  ESP_ERROR_CHECK(esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N));
  
 -  ESP_ERROR_CHECK(esp_wifi_set_bandwidth(WIFI_IF_STA, WIFI_BW_HT40));
 +  ESP_ERROR_CHECK(esp_wifi_set_bandwidth(WIFI_IF_STA, WIFI_BW_HT20));
@@ -139,20 +137,27 @@ index ae620b6..bb7eeff 100644
  
    wifi_config_t wifi_config;
    ESP_ERROR_CHECK(esp_wifi_get_config(WIFI_IF_STA, &wifi_config));
+@@ -253,6 +254,7 @@ void wifi_start(void) {
+ 
+   /* Start Wi-Fi station */
+   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
++  ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
+   ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
+ 
+   ESP_ERROR_CHECK(esp_event_handler_register(
 diff --git a/snapclient/main/main.c b/snapclient/main/main.c
-index 06b070d..30bf93c 100644
+index 06b070d..10ab7b1 100644
 --- a/snapclient/main/main.c
 +++ b/snapclient/main/main.c
-@@ -738,8 +738,6 @@ void handle_chunk_message(codec_type_t codec, snapcastSetting_t *scSet,
+@@ -738,7 +738,6 @@ void handle_chunk_message(codec_type_t codec, snapcastSetting_t *scSet,
                   "of packet");
        }
  
 -      scSet->chkInFrames = samples_per_frame;
--
+ 
        // ESP_LOGW(TAG, "%d, %llu, %llu",
        // samples_per_frame, 1000000ULL *
-       // samples_per_frame / scSet->sr,
-@@ -775,6 +773,11 @@ void handle_chunk_message(codec_type_t codec, snapcastSetting_t *scSet,
+@@ -775,6 +774,11 @@ void handle_chunk_message(codec_type_t codec, snapcastSetting_t *scSet,
        free(decoderChunk.inData);
        decoderChunk.inData = NULL;
  
@@ -164,7 +169,7 @@ index 06b070d..30bf93c 100644
        pcm_chunk_message_t *new_pcmChunk = NULL;
  
        // ESP_LOGW(TAG, "OPUS decode: %d", frame_size);
-@@ -1534,7 +1537,9 @@ void app_main(void) {
+@@ -1534,7 +1538,9 @@ void app_main(void) {
    //  ESP_LOGI(TAG, "Setup ws server");
    //  websocket_if_start();
  

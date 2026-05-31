@@ -6,8 +6,8 @@ Changes versus the upstream ESP-AI-Thinker config:
 
 - Wi-Fi power save disabled.
 - Wi-Fi bandwidth forced to 20 MHz.
-- Wi-Fi AMPDU aggregation disabled.
-- Wi-Fi station protocol restricted to 802.11g only, with 802.11b and 802.11n disabled.
+- Wi-Fi station protocol restricted to 802.11g/802.11n, with 802.11b disabled.
+- Wi-Fi AMPDU aggregation enabled with smaller block-ack windows.
 - Wi-Fi and LwIP IRAM optimizations enabled.
 - Snapclient hard-resync relaxed from 2 ms to 75 ms, and queue-empty no longer causes a hard resync unless the client is already late.
 - Opus chunk sizing fixed so `chkInFrames` uses the decoded sample count when Snapserver bundles multiple Opus frames per chunk.
