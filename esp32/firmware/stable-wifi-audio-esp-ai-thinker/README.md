@@ -1,6 +1,6 @@
 # Stable Wi-Fi/audio ESP-AI-Thinker firmware
 
-Built by GitHub Actions from commit `04eb294` using `esp32/firmware/patches/esp-ai-thinker-stable-wifi-audio.patch`.
+Built by GitHub Actions from commit `ad7d4c7` using `esp32/firmware/patches/esp-ai-thinker-stable-wifi-audio.patch`.
 
 Changes versus the upstream ESP-AI-Thinker config:
 
@@ -31,8 +31,8 @@ Flash offsets:
 SHA256:
 
 ```text
-075f12877db4afbf0394fc3ff7c7e244f39f33bae81a499fc1d420b83236b18a  bootloader.bin
+ec0b549b277e971c5f26cc2ee552b4f158b264b4026943a0ce6c9724a4f9604c  bootloader.bin
 7d2c7ac4888bfd75cd5f56e8d61f69595121183afc81556c876732fd3782c62f  ota_data_initial.bin
 f8a731f7f8f59c3826ea978062eedc49f822465de138718c794b5d7fce18abcf  partition-table.bin
-2c090c8572bd3924b672360c055c271ef8a4e619d7989b6e794a081017c4c5b1  snapclient.bin
+2f74ce4c51fd376fc087daea2b1874522571207e5a7d7a2f8c52cca466961dd3  snapclient.bin
 ```
